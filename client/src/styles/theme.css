@@ -1,0 +1,55 @@
+:root {
+  /* ── Brand Colours ── */
+  --color-primary:        #8B1A1A;
+  --color-primary-hover:  #6B1010;
+  --color-primary-light:  #C0392B;
+  --color-accent:         #D4AF37;
+  --color-accent-light:   #F0CE5E;
+  --color-accent-dim:     #A68A20;
+  --color-dark:           #0D0D0D;
+
+  /* ── Backgrounds ── */
+  --color-bg:             #F9F6F0;
+  --color-surface:        #FFFFFF;
+  --color-surface-alt:    #F3EDE0;
+  --color-sidebar:        #1A0A0A;
+  --color-sidebar-hover:  #2E1010;
+
+  /* ── Text ── */
+  --color-text:           #1A0A0A;
+  --color-text-muted:     #6B5B5B;
+  --color-text-inverse:   #FFFFFF;
+  --color-text-accent:    #D4AF37;
+
+  /* ── Status ── */
+  --color-complete:       #2E7D32;
+  --color-complete-bg:    #E8F5E9;
+  --color-incomplete:     #C0392B;
+  --color-incomplete-bg:  #FDECEA;
+  --color-overdue:        #D4AF37;
+  --color-overdue-bg:     #FFF8E1;
+  --color-in-progress:    #1565C0;
+  --color-in-progress-bg: #E3F2FD;
+
+  /* ── Border & Shadow ── */
+  --color-border:         #E0D0B8;
+  --color-border-strong:  #C4A882;
+  --shadow-sm:            0 1px 3px rgba(139, 26, 26, 0.08);
+  --shadow-card:          0 2px 8px rgba(139, 26, 26, 0.10);
+  --shadow-modal:         0 8px 32px rgba(139, 26, 26, 0.18);
+
+  /* ── Typography ── */
+  --font-sans:            'Inter', system-ui, sans-serif;
+  --font-mono:            'JetBrains Mono', monospace;
+
+  /* ── Spacing ── */
+  --radius-sm:            4px;
+  --radius-md:            8px;
+  --radius-lg:            12px;
+  --radius-xl:            16px;
+  --radius-full:          9999px;
+
+  /* ── Sidebar ── */
+  --sidebar-width:        240px;
+  --navbar-height:        56px;
+}
