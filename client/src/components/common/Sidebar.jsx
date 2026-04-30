@@ -1,27 +1,52 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, BookOpen, FolderKanban, Settings,
-  LogOut, BarChart2, FileText, ListChecks, FolderTree, Clock
+  LayoutDashboard, BookOpen, FolderKanban,
+  Settings, LogOut, BarChart2, FileText,
+  ListChecks, FolderTree, Clock
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
+import logo from '../../assets/logo.png'
 
-/* ── Nav item groups by role ── */
+/* ── Nav sections by role ── */
 const NAV = {
   Lecturer: [
-    { label: 'My Dashboard',  to: '/my-dashboard',  icon: LayoutDashboard },
-    { label: 'My Subjects',   to: '/my-subjects',   icon: BookOpen },
+    {
+      section: 'My Submission',
+      items: [
+        { label: 'My Dashboard', to: '/my-dashboard', icon: LayoutDashboard },
+        { label: 'My Subjects',  to: '/my-subjects',  icon: BookOpen },
+      ],
+    },
   ],
+
   PIC: [
-    { label: 'Programme Dashboard', to: '/programme-dashboard', icon: BarChart2 },
-    { label: 'My Subjects',         to: '/my-subjects',         icon: BookOpen },
-    { label: 'Subjects & Sections', to: '/subjects-sections',   icon: FolderKanban },
-    { label: 'Subfolder Template',  to: '/subfolder-template',  icon: FolderTree },
-    { label: 'Audit Log',           to: '/audit-log',           icon: Clock },
+    {
+      section: 'My Submission',
+      items: [
+        { label: 'My Dashboard', to: '/my-dashboard', icon: LayoutDashboard },
+        { label: 'My Subjects',  to: '/my-subjects',  icon: BookOpen },
+      ],
+    },
+    {
+      section: 'Programme Management',
+      items: [
+        { label: 'Programme Dashboard', to: '/programme-dashboard', icon: BarChart2 },
+        { label: 'Subjects & Sections', to: '/subjects-sections',   icon: FolderKanban },
+        { label: 'Subfolder Template',  to: '/subfolder-template',  icon: FolderTree },
+        { label: 'Audit Log',           to: '/audit-log',           icon: Clock },
+      ],
+    },
   ],
+
   Audit: [
-    { label: 'Completion Dashboard', to: '/completion-dashboard', icon: ListChecks },
-    { label: 'Export Report',        to: '/export-report',        icon: FileText },
-    { label: 'Audit Log',            to: '/audit-log-view',       icon: Clock },
+    {
+      section: 'Reports',
+      items: [
+        { label: 'Completion Dashboard', to: '/completion-dashboard', icon: ListChecks },
+        { label: 'Export Report',        to: '/export-report',        icon: FileText },
+        { label: 'Audit Log',            to: '/audit-log-view',       icon: Clock },
+      ],
+    },
   ],
 }
 
@@ -32,7 +57,7 @@ function initials(name = '') {
 export default function Sidebar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const navItems = NAV[user?.role] ?? []
+  const sections = NAV[user?.role] ?? []
 
   function handleLogout() {
     logout()
@@ -43,9 +68,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       {/* Brand */}
       <div className="sidebar-brand">
-        <div className="sidebar-brand-icon">
-          <FolderKanban size={18} color="#fff" />
-        </div>
+        <img src={logo} alt="SOF-EA UTM" className="sidebar-brand-logo" />
         <div className="sidebar-brand-text">
           <div className="sidebar-brand-title">File Management</div>
           <div className="sidebar-brand-sub">SE Course System</div>
@@ -54,27 +77,35 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="sidebar-nav">
-        <span className="sidebar-section-label">Navigation</span>
-        {navItems.map(({ label, to, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-          >
-            <Icon size={16} />
-            {label}
-          </NavLink>
+        {sections.map(({ section, items }) => (
+          <div key={section}>
+            <span className="sidebar-section-label">{section}</span>
+            {items.map(({ label, to, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+              >
+                <Icon size={16} />
+                {label}
+              </NavLink>
+            ))}
+          </div>
         ))}
 
-        {/* Change password — available to all */}
-        <span className="sidebar-section-label" style={{ marginTop: '0.5rem' }}>Account</span>
-        <NavLink
-          to="/change-password"
-          className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-        >
-          <Settings size={16} />
-          Change Password
-        </NavLink>
+        {/* Account — always shown */}
+        <div>
+          <span className="sidebar-section-label" style={{ marginTop: '0.5rem', display: 'block' }}>
+            Account
+          </span>
+          <NavLink
+            to="/change-password"
+            className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+          >
+            <Settings size={16} />
+            Change Password
+          </NavLink>
+        </div>
       </nav>
 
       {/* Footer */}

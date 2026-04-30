@@ -1,11 +1,12 @@
 // UC-01 — Login to System
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Mail, Lock, Eye, EyeOff, FolderKanban, AlertCircle } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { authService } from '../../services/authService.js'
 import Spinner from '../../components/common/Spinner.jsx'
+import logo from '../../assets/logo.png'
 
 const ROLE_HOME = {
   Lecturer: '/my-dashboard',
@@ -25,10 +26,9 @@ export default function Login() {
     formState: { errors, isSubmitting },
   } = useForm()
 
-  // Already logged in — redirect immediately
+  // Already logged in — redirect immediately (use <Navigate> not navigate() during render)
   if (user) {
-    navigate(ROLE_HOME[user.role] ?? '/my-dashboard', { replace: true })
-    return null
+    return <Navigate to={ROLE_HOME[user.role] ?? '/my-dashboard'} replace />
   }
 
   async function onSubmit(data) {
@@ -49,9 +49,7 @@ export default function Login() {
       <div className="auth-card">
         {/* Brand */}
         <div className="auth-brand">
-          <div className="auth-logo">
-            <FolderKanban size={26} color="#fff" />
-          </div>
+          <img src={logo} alt="SOF-EA UTM" className="auth-logo-img" />
           <h1 className="auth-title">File Management System</h1>
           <p className="auth-subtitle">Sign in to your account to continue</p>
         </div>

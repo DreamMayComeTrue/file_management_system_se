@@ -1,42 +1,42 @@
 :root {
   /* ── Brand Colours ── */
-  --color-primary:        #8B1A1A;
-  --color-primary-hover:  #6B1010;
-  --color-primary-light:  #C0392B;
+  --color-primary:        #C62828;
+  --color-primary-hover:  #8B1A1A;
+  --color-primary-light:  #EF5350;
   --color-accent:         #D4AF37;
   --color-accent-light:   #F0CE5E;
   --color-accent-dim:     #A68A20;
-  --color-dark:           #0D0D0D;
+  --color-dark:           #000000;
 
-  /* ── Backgrounds ── */
-  --color-bg:             #F9F6F0;
-  --color-surface:        #FFFFFF;
-  --color-surface-alt:    #F3EDE0;
-  --color-sidebar:        #1A0A0A;
-  --color-sidebar-hover:  #2E1010;
+  /* ── Backgrounds (dark theme) ── */
+  --color-bg:             #0D0D0D;
+  --color-surface:        #161616;
+  --color-surface-alt:    #202020;
+  --color-sidebar:        #0A0A0A;
+  --color-sidebar-hover:  #1C1C1C;
 
   /* ── Text ── */
-  --color-text:           #1A0A0A;
-  --color-text-muted:     #6B5B5B;
+  --color-text:           #EFEFEF;
+  --color-text-muted:     #888888;
   --color-text-inverse:   #FFFFFF;
   --color-text-accent:    #D4AF37;
 
   /* ── Status ── */
-  --color-complete:       #2E7D32;
-  --color-complete-bg:    #E8F5E9;
-  --color-incomplete:     #C0392B;
-  --color-incomplete-bg:  #FDECEA;
+  --color-complete:       #4CAF50;
+  --color-complete-bg:    rgba(76, 175, 80, 0.12);
+  --color-incomplete:     #EF5350;
+  --color-incomplete-bg:  rgba(239, 83, 80, 0.12);
   --color-overdue:        #D4AF37;
-  --color-overdue-bg:     #FFF8E1;
-  --color-in-progress:    #1565C0;
-  --color-in-progress-bg: #E3F2FD;
+  --color-overdue-bg:     rgba(212, 175, 55, 0.12);
+  --color-in-progress:    #5B9BD5;
+  --color-in-progress-bg: rgba(91, 155, 213, 0.12);
 
   /* ── Border & Shadow ── */
-  --color-border:         #E0D0B8;
-  --color-border-strong:  #C4A882;
-  --shadow-sm:            0 1px 3px rgba(139, 26, 26, 0.08);
-  --shadow-card:          0 2px 8px rgba(139, 26, 26, 0.10);
-  --shadow-modal:         0 8px 32px rgba(139, 26, 26, 0.18);
+  --color-border:         #2A2A2A;
+  --color-border-strong:  #3D3D3D;
+  --shadow-sm:            0 1px 4px rgba(0,0,0,0.5);
+  --shadow-card:          0 2px 10px rgba(0,0,0,0.6);
+  --shadow-modal:         0 8px 40px rgba(0,0,0,0.8);
 
   /* ── Typography ── */
   --font-sans:            'Inter', system-ui, sans-serif;
