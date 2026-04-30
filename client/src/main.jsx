@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import App from './App.jsx'
 import './styles/theme.css'
 import './styles/global.css'
+import './styles/components.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {
