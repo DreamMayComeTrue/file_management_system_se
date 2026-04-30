@@ -1,0 +1,158 @@
+const File        = require('../models/File')
+const FileVersion = require('../models/FileVersion')
+const Section     = require('../models/Section')
+const Subfolder   = require('../models/Subfolder')
+const AuditLog    = require('../models/AuditLog')
+const asyncHandler  = require('../utils/asyncHandler')
+const cloudinarySvc = require('../services/cloudinaryService')
+
+// UC-10 / UC-11 — list subfolders + files for a section
+exports.getSectionContents = asyncHandler(async (req, res) => {
+  const { sectionId } = req.params
+  const subfolders = await Subfolder.findBySection(sectionId)
+  const contents = await Promise.all(
+    subfolders.map(async sf => ({
+      ...sf,
+      files: await File.findBySubfolder(sf.id, sectionId),
+    }))
+  )
+  res.json(contents)
+})
+
+// UC-08 — Upload file (initial upload)
+exports.upload = asyncHandler(async (req, res) => {
+  const { sectionId, subfolderId } = req.body
+  const section = await Section.findById(sectionId)
+  if (!section) return res.status(404).json({ message: 'Section not found' })
+  if (section.deadline && new Date() > new Date(section.deadline)) {
+    return res.status(403).json({ message: 'Deadline has passed — uploads are blocked' })
+  }
+  const fileId = await File.create({
+    originalName: req.file.originalname,
+    subfolderId,
+    sectionId,
+    uploadedBy: req.user.id,
+  })
+  await FileVersion.addVersion({
+    fileId,
+    url:                req.file.path,
+    cloudinaryPublicId: req.file.filename,
+    uploadedBy:         req.user.id,
+  })
+  await AuditLog.record({
+    userId:      req.user.id,
+    action:      'UPLOAD',
+    fileId,
+    subfolderId: parseInt(subfolderId),
+    sectionId:   parseInt(sectionId),
+    fileName:    req.file.originalname,
+  })
+  res.status(201).json({ fileId })
+})
+
+// UC-09 — Upload new version
+exports.uploadVersion = asyncHandler(async (req, res) => {
+  const file = await File.findById(req.params.fileId)
+  if (!file) return res.status(404).json({ message: 'File not found' })
+  const section = await Section.findById(file.sectionId)
+  if (section.deadline && new Date() > new Date(section.deadline)) {
+    return res.status(403).json({ message: 'Deadline has passed — uploads are blocked' })
+  }
+  await FileVersion.addVersion({
+    fileId:             file.id,
+    url:                req.file.path,
+    cloudinaryPublicId: req.file.filename,
+    uploadedBy:         req.user.id,
+  })
+  await AuditLog.record({
+    userId:      req.user.id,
+    action:      'UPLOAD',
+    fileId:      file.id,
+    subfolderId: file.subfolderId,
+    sectionId:   file.sectionId,
+    fileName:    req.file.originalname,
+  })
+  res.json({ message: 'New version uploaded' })
+})
+
+// UC-12 — Get version history
+exports.getVersions = asyncHandler(async (req, res) => {
+  const versions = await FileVersion.findByFile(req.params.fileId)
+  res.json(versions)
+})
+
+// UC-13 — Restore a version
+exports.restoreVersion = asyncHandler(async (req, res) => {
+  const file = await File.findById(req.params.fileId)
+  if (!file) return res.status(404).json({ message: 'File not found' })
+  const section = await Section.findById(file.sectionId)
+  if (section.deadline && new Date() > new Date(section.deadline)) {
+    return res.status(403).json({ message: 'Deadline has passed — restores are blocked' })
+  }
+  await FileVersion.restore(req.params.versionId, req.user.id)
+  await AuditLog.record({
+    userId:      req.user.id,
+    action:      'RESTORE',
+    fileId:      file.id,
+    subfolderId: file.subfolderId,
+    sectionId:   file.sectionId,
+    fileName:    file.originalName,
+  })
+  res.json({ message: 'Version restored as new current version' })
+})
+
+// UC-14 — Delete file
+exports.deleteFile = asyncHandler(async (req, res) => {
+  const file = await File.findById(req.params.fileId)
+  if (!file) return res.status(404).json({ message: 'File not found' })
+  const section = await Section.findById(file.sectionId)
+  if (section.deadline && new Date() > new Date(section.deadline)) {
+    return res.status(403).json({ message: 'Deadline has passed — deletion is blocked' })
+  }
+  // Record audit before deletion (file data will be gone after)
+  await AuditLog.record({
+    userId:      req.user.id,
+    action:      'DELETE',
+    fileId:      file.id,
+    subfolderId: file.subfolderId,
+    sectionId:   file.sectionId,
+    fileName:    file.originalName,
+  })
+  // Delete all Cloudinary assets
+  const versions = await FileVersion.findByFile(file.id)
+  for (const v of versions) {
+    if (v.cloudinaryPublicId) {
+      await cloudinarySvc.deleteResource(v.cloudinaryPublicId).catch(() => {})
+    }
+  }
+  await File.deleteWithVersions(file.id)
+  // Check if subfolder still has files — if not, revert completion status
+  const remaining = await File.findBySubfolder(file.subfolderId, file.sectionId)
+  if (remaining.length === 0) {
+    await Subfolder.markIncomplete(file.subfolderId)
+  }
+  res.json({ message: 'File deleted' })
+})
+
+// Lecturer manually marks a subfolder as complete
+exports.markSubfolderComplete = asyncHandler(async (req, res) => {
+  const subfolder = await Subfolder.findById(req.params.subfolderId)
+  if (!subfolder) return res.status(404).json({ message: 'Subfolder not found' })
+  const section = await Section.findById(subfolder.sectionId)
+  if (section.deadline && new Date() > new Date(section.deadline)) {
+    return res.status(403).json({ message: 'Deadline has passed' })
+  }
+  await Subfolder.markComplete(req.params.subfolderId, req.user.id)
+  res.json({ message: 'Subfolder marked as complete' })
+})
+
+// PIC: manage subfolders within a section
+exports.addSubfolder = asyncHandler(async (req, res) => {
+  const id = await Subfolder.create({ name: req.body.name, sectionId: req.params.sectionId })
+  res.status(201).json({ id })
+})
+
+exports.removeSubfolder = asyncHandler(async (req, res) => {
+  await Subfolder.delete(req.params.subfolderId)
+  res.json({ message: 'Subfolder removed' })
+})
