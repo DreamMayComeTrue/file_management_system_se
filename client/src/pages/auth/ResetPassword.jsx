@@ -2,9 +2,10 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, FolderKanban } from 'lucide-react'
+import { Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
 import { authService } from '../../services/authService.js'
 import Spinner from '../../components/common/Spinner.jsx'
+import logo from '../../assets/logo.png'
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -50,9 +51,7 @@ export default function ResetPassword() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <div className="auth-logo">
-            <FolderKanban size={26} color="#fff" />
-          </div>
+          <img src={logo} alt="SOF-EA UTM" className="auth-logo-img" />
           <h1 className="auth-title">Set new password</h1>
           <p className="auth-subtitle">Choose a strong password for your account</p>
         </div>

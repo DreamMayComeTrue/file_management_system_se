@@ -2,9 +2,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Mail, AlertCircle, CheckCircle, FolderKanban, ArrowLeft } from 'lucide-react'
+import { Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 import { authService } from '../../services/authService.js'
 import Spinner from '../../components/common/Spinner.jsx'
+import logo from '../../assets/logo.png'
 
 export default function ForgotPassword() {
   const [sent, setSent] = useState(false)
@@ -31,9 +32,7 @@ export default function ForgotPassword() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <div className="auth-logo">
-            <FolderKanban size={26} color="#fff" />
-          </div>
+          <img src={logo} alt="SOF-EA UTM" className="auth-logo-img" />
           <h1 className="auth-title">Reset your password</h1>
           <p className="auth-subtitle">
             {sent
