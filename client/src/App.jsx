@@ -1,10 +1,14 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import ProtectedRoute from './components/common/ProtectedRoute.jsx'
+import AppLayout from './components/common/AppLayout.jsx'
 
-// Auth pages
+// Auth pages (public)
 import Login from './pages/auth/Login.jsx'
 import ForgotPassword from './pages/auth/ForgotPassword.jsx'
+import ResetPassword from './pages/auth/ResetPassword.jsx'
+
+// Auth pages (authenticated)
 import ChangePassword from './pages/auth/ChangePassword.jsx'
 
 // Lecturer pages
@@ -30,42 +34,51 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public */}
+        {/* ── Public ── */}
         <Route path="/login"           element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password"  element={<ResetPassword />} />
 
-        {/* Authenticated — all roles */}
+        {/* ── All authenticated roles ── */}
         <Route element={<ProtectedRoute roles={['Lecturer', 'PIC', 'Audit']} />}>
-          <Route path="/change-password" element={<ChangePassword />} />
+          <Route element={<AppLayout />}>
+            <Route path="/change-password" element={<ChangePassword />} />
+          </Route>
         </Route>
 
-        {/* Lecturer + PIC */}
+        {/* ── Lecturer + PIC ── */}
         <Route element={<ProtectedRoute roles={['Lecturer', 'PIC']} />}>
-          <Route path="/my-dashboard"          element={<LecturerDashboard />} />
-          <Route path="/my-subjects"           element={<LecturerSubjects />} />
-          <Route path="/my-subjects/:subjectId/sections/:sectionId" element={<SubfolderView />} />
+          <Route element={<AppLayout />}>
+            <Route path="/my-dashboard"  element={<LecturerDashboard />} />
+            <Route path="/my-subjects"   element={<LecturerSubjects />} />
+            <Route path="/my-subjects/:subjectId/sections/:sectionId" element={<SubfolderView />} />
+          </Route>
         </Route>
 
-        {/* PIC only */}
+        {/* ── PIC only ── */}
         <Route element={<ProtectedRoute roles={['PIC']} />}>
-          <Route path="/programme-dashboard"  element={<ProgrammeDashboard />} />
-          <Route path="/subjects-sections"    element={<SubjectsAndSections />} />
-          <Route path="/subjects/create"      element={<CreateSubject />} />
-          <Route path="/subjects/:subjectId/sections/create" element={<CreateSection />} />
-          <Route path="/subjects/:subjectId/sections/:sectionId" element={<SectionDetail />} />
-          <Route path="/subfolder-template"   element={<SubfolderTemplate />} />
-          <Route path="/set-deadline/:sectionId" element={<SetDeadline />} />
-          <Route path="/audit-log"            element={<AuditLog />} />
+          <Route element={<AppLayout />}>
+            <Route path="/programme-dashboard"  element={<ProgrammeDashboard />} />
+            <Route path="/subjects-sections"    element={<SubjectsAndSections />} />
+            <Route path="/subjects/create"      element={<CreateSubject />} />
+            <Route path="/subjects/:subjectId/sections/create" element={<CreateSection />} />
+            <Route path="/subjects/:subjectId/sections/:sectionId" element={<SectionDetail />} />
+            <Route path="/subfolder-template"   element={<SubfolderTemplate />} />
+            <Route path="/set-deadline/:sectionId" element={<SetDeadline />} />
+            <Route path="/audit-log"            element={<AuditLog />} />
+          </Route>
         </Route>
 
-        {/* Audit only */}
+        {/* ── Audit only ── */}
         <Route element={<ProtectedRoute roles={['Audit']} />}>
-          <Route path="/completion-dashboard" element={<CompletionDashboard />} />
-          <Route path="/export-report"        element={<ExportReport />} />
-          <Route path="/audit-log-view"       element={<AuditLog />} />
+          <Route element={<AppLayout />}>
+            <Route path="/completion-dashboard" element={<CompletionDashboard />} />
+            <Route path="/export-report"        element={<ExportReport />} />
+            <Route path="/audit-log-view"       element={<AuditLog />} />
+          </Route>
         </Route>
 
-        {/* Fallback */}
+        {/* ── Fallback ── */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
