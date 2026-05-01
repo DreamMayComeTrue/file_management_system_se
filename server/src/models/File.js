@@ -1,12 +1,19 @@
 const pool = require('../config/db')
 
 const File = {
+  // Returns files in a subfolder (current version only) with aliased fields expected by frontend
   async findBySubfolder(subfolderId, sectionId) {
     const [rows] = await pool.query(
-      `SELECT f.*, fv.id AS versionId, fv.url, fv.versionNumber, fv.uploadedAt
+      `SELECT
+         f.id, f.subfolderId,
+         f.originalName  AS fileName,
+         fv.url          AS fileUrl,
+         fv.fileSize,
+         fv.uploadedAt
        FROM FILE f
        JOIN FILEVERSION fv ON fv.fileId = f.id AND fv.isCurrent = 1
-       WHERE f.subfolderId = ? AND f.sectionId = ?`,
+       WHERE f.subfolderId = ? AND f.sectionId = ?
+       ORDER BY fv.uploadedAt DESC`,
       [subfolderId, sectionId]
     )
     return rows
@@ -25,20 +32,9 @@ const File = {
     return result.insertId
   },
 
-  // Atomically delete file + all versions
+  // Atomically delete file + all its versions (ON DELETE CASCADE handles it, but explicit is safer)
   async deleteWithVersions(id) {
-    const conn = await pool.getConnection()
-    try {
-      await conn.beginTransaction()
-      await conn.query('DELETE FROM FILEVERSION WHERE fileId = ?', [id])
-      await conn.query('DELETE FROM FILE WHERE id = ?', [id])
-      await conn.commit()
-    } catch (err) {
-      await conn.rollback()
-      throw err
-    } finally {
-      conn.release()
-    }
+    await pool.query('DELETE FROM FILE WHERE id = ?', [id])
   },
 }
 

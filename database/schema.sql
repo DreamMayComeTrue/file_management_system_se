@@ -1,11 +1,7 @@
 -- SE Course File Management System — Database Schema
 -- Run once on your Railway MySQL instance
 
-CREATE DATABASE IF NOT EXISTS se_file_mgmt
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE se_file_mgmt;
+USE railway;
 
 -- ─────────────────────────────────────────────
 -- USER
@@ -23,31 +19,37 @@ CREATE TABLE IF NOT EXISTS USER (
 
 -- ─────────────────────────────────────────────
 -- SUBJECT
+-- programme, semester, academicYear added for full subject info
+-- lecturerId nullable — defaults to PIC who created it
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS SUBJECT (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  name         VARCHAR(191) NOT NULL,
   code         VARCHAR(30)  NOT NULL UNIQUE,
-  lecturerId   INT UNSIGNED NOT NULL,
+  name         VARCHAR(191) NOT NULL,
+  programme    VARCHAR(20)  NOT NULL DEFAULT '',
+  semester     TINYINT      NOT NULL DEFAULT 1,
+  academicYear VARCHAR(10)  NOT NULL DEFAULT '',
+  lecturerId   INT UNSIGNED DEFAULT NULL,
   createdAt    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_subject_lecturer FOREIGN KEY (lecturerId) REFERENCES USER(id)
 );
 
 -- ─────────────────────────────────────────────
 -- SECTION
+-- sectionNumber is the identifier (e.g. '01', '02', 'A')
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS SECTION (
-  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  name        VARCHAR(191)  NOT NULL,
-  subjectId   INT UNSIGNED  NOT NULL,
-  deadline    DATETIME      DEFAULT NULL,
-  createdAt   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  sectionNumber  VARCHAR(10)   NOT NULL,
+  subjectId      INT UNSIGNED  NOT NULL,
+  deadline       DATETIME      DEFAULT NULL,
+  createdAt      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_section_subject FOREIGN KEY (subjectId) REFERENCES SUBJECT(id) ON DELETE CASCADE
 );
 
 -- ─────────────────────────────────────────────
 -- SUBFOLDER_TEMPLATE
--- Defines the default subfolder names applied when a new section is created
+-- Default subfolder names auto-applied when a new section is created
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS SUBFOLDER_TEMPLATE (
   id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -57,7 +59,8 @@ CREATE TABLE IF NOT EXISTS SUBFOLDER_TEMPLATE (
 
 -- ─────────────────────────────────────────────
 -- SUBFOLDER
--- isCompleted is set manually by the Lecturer — uploading a file does NOT auto-complete
+-- isCompleted = MANUAL — lecturer clicks button, NOT auto on upload
+-- Reverts to 0 automatically when last file in subfolder is deleted
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS SUBFOLDER (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -67,7 +70,7 @@ CREATE TABLE IF NOT EXISTS SUBFOLDER (
   completedAt  DATETIME      DEFAULT NULL,
   completedBy  INT UNSIGNED  DEFAULT NULL,
   createdAt    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_subfolder_section   FOREIGN KEY (sectionId)   REFERENCES SECTION(id) ON DELETE CASCADE,
+  CONSTRAINT fk_subfolder_section   FOREIGN KEY (sectionId)   REFERENCES SECTION(id)  ON DELETE CASCADE,
   CONSTRAINT fk_subfolder_completer FOREIGN KEY (completedBy) REFERENCES USER(id)
 );
 
@@ -81,46 +84,47 @@ CREATE TABLE IF NOT EXISTS FILE (
   sectionId    INT UNSIGNED  NOT NULL,
   uploadedBy   INT UNSIGNED  NOT NULL,
   createdAt    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_file_subfolder FOREIGN KEY (subfolderId) REFERENCES SUBFOLDER(id),
-  CONSTRAINT fk_file_section   FOREIGN KEY (sectionId)   REFERENCES SECTION(id)  ON DELETE CASCADE,
+  CONSTRAINT fk_file_subfolder FOREIGN KEY (subfolderId) REFERENCES SUBFOLDER(id) ON DELETE CASCADE,
+  CONSTRAINT fk_file_section   FOREIGN KEY (sectionId)   REFERENCES SECTION(id)   ON DELETE CASCADE,
   CONSTRAINT fk_file_uploader  FOREIGN KEY (uploadedBy)  REFERENCES USER(id)
 );
 
 -- ─────────────────────────────────────────────
 -- FILEVERSION
--- isCurrent = 1 → the active version shown in the UI
--- Restoring creates a new row (new versionNumber) rather than editing history
+-- isCurrent = 1 → active version shown in UI
+-- fileSize stored in bytes
+-- Restoring creates a new version row (history preserved)
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS FILEVERSION (
-  id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  fileId              INT UNSIGNED  NOT NULL,
-  url                 TEXT          NOT NULL,
-  cloudinaryPublicId  VARCHAR(255)  DEFAULT NULL,
-  versionNumber       SMALLINT UNSIGNED NOT NULL DEFAULT 1,
-  isCurrent           TINYINT(1)    NOT NULL DEFAULT 0,
-  uploadedBy          INT UNSIGNED  NOT NULL,
-  uploadedAt          DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                  INT UNSIGNED      AUTO_INCREMENT PRIMARY KEY,
+  fileId              INT UNSIGNED       NOT NULL,
+  url                 TEXT               NOT NULL,
+  cloudinaryPublicId  VARCHAR(255)       DEFAULT NULL,
+  fileSize            BIGINT UNSIGNED    DEFAULT NULL,
+  versionNumber       SMALLINT UNSIGNED  NOT NULL DEFAULT 1,
+  isCurrent           TINYINT(1)         NOT NULL DEFAULT 0,
+  uploadedBy          INT UNSIGNED       NOT NULL,
+  uploadedAt          DATETIME           NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_fv_file     FOREIGN KEY (fileId)     REFERENCES FILE(id) ON DELETE CASCADE,
   CONSTRAINT fk_fv_uploader FOREIGN KEY (uploadedBy) REFERENCES USER(id)
 );
 
 -- ─────────────────────────────────────────────
 -- COMMENT
--- 1:1 with SECTION — single updatable text block per section
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS COMMENT (
-  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  sectionId   INT UNSIGNED NOT NULL UNIQUE,
-  body        TEXT         NOT NULL,
-  authorId    INT UNSIGNED NOT NULL,
-  updatedAt   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  sectionId INT UNSIGNED NOT NULL UNIQUE,
+  body      TEXT         NOT NULL,
+  authorId  INT UNSIGNED NOT NULL,
+  updatedAt DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_comment_section FOREIGN KEY (sectionId) REFERENCES SECTION(id) ON DELETE CASCADE,
   CONSTRAINT fk_comment_author  FOREIGN KEY (authorId)  REFERENCES USER(id)
 );
 
 -- ─────────────────────────────────────────────
 -- DEADLINE_LOG
--- Records every time a deadline is set or extended, including the reason
+-- Records every deadline set or extension with mandatory reason for extensions
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS DEADLINE_LOG (
   id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -130,13 +134,13 @@ CREATE TABLE IF NOT EXISTS DEADLINE_LOG (
   reason           TEXT         DEFAULT NULL,
   changedBy        INT UNSIGNED NOT NULL,
   changedAt        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_dl_section FOREIGN KEY (sectionId)  REFERENCES SECTION(id) ON DELETE CASCADE,
-  CONSTRAINT fk_dl_user    FOREIGN KEY (changedBy)   REFERENCES USER(id)
+  CONSTRAINT fk_dl_section FOREIGN KEY (sectionId) REFERENCES SECTION(id) ON DELETE CASCADE,
+  CONSTRAINT fk_dl_user    FOREIGN KEY (changedBy)  REFERENCES USER(id)
 );
 
 -- ─────────────────────────────────────────────
 -- AUDIT_LOG
--- Explicit log of all upload, delete, and restore actions
+-- Explicit log of UPLOAD, DELETE, RESTORE actions
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS AUDIT_LOG (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -151,13 +155,10 @@ CREATE TABLE IF NOT EXISTS AUDIT_LOG (
 );
 
 -- ─────────────────────────────────────────────
--- Seed: one PIC account (change password after first login)
--- Generate hash with: node -e "require('bcryptjs').hash('changeme123',12).then(console.log)"
+-- SEED: test accounts  (password = Password123! for all)
+-- Hash generated with: bcrypt.hash('Password123!', 12)
 -- ─────────────────────────────────────────────
-INSERT IGNORE INTO USER (fullName, email, passwordHash, role)
-VALUES (
-  'Programme Coordinator',
-  'pic@utm.my',
-  '$2a$12$ReplaceThisWithARealBcryptHashGeneratedLocally00000000000',
-  'PIC'
-);
+INSERT IGNORE INTO USER (fullName, email, passwordHash, role) VALUES
+('Programme Coordinator', 'pic@utm.my',      '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'PIC'),
+('Test Lecturer',         'lecturer@utm.my', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Lecturer'),
+('Audit Officer',         'audit@utm.my',    '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Audit');

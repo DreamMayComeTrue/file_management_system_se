@@ -1,50 +1,34 @@
-const pool       = require('../config/db')
+const Subject    = require('../models/Subject')
 const Comment    = require('../models/Comment')
 const asyncHandler = require('../utils/asyncHandler')
 
-// UC-05 — Lecturer: my subjects completion overview
+// UC-12 — Lecturer/PIC: my own subjects + sections with completion overview
+// GET /api/dashboard/mine
+// Returns: { subjects: [ { id, code, name, programme, semester, academicYear, sections: [...] } ] }
 exports.getMyDashboard = asyncHandler(async (req, res) => {
-  const [rows] = await pool.query(
-    `SELECT
-       sub.id AS subjectId, sub.name AS subjectName, sub.code,
-       sec.id AS sectionId, sec.name AS sectionName, sec.deadline,
-       COUNT(DISTINCT sf.id)                                        AS totalSubfolders,
-       COUNT(DISTINCT CASE WHEN sf.isCompleted = 1 THEN sf.id END) AS completedSubfolders
-     FROM SUBJECT sub
-     JOIN SECTION sec   ON sec.subjectId = sub.id
-     LEFT JOIN SUBFOLDER sf ON sf.sectionId = sec.id
-     WHERE sub.lecturerId = ?
-     GROUP BY sub.id, sec.id`,
-    [req.user.id]
-  )
-  res.json(rows)
+  const subjects = await Subject.findByLecturerWithSections(req.user.id)
+  res.json({ subjects })
 })
 
-// UC-04 — PIC: programme-wide completion dashboard
+// UC-14 — PIC/Audit: programme-wide completion overview
+// GET /api/dashboard/programme
+// Returns: { subjects: [...] }
 exports.getProgrammeDashboard = asyncHandler(async (req, res) => {
-  const [rows] = await pool.query(
-    `SELECT
-       sub.id AS subjectId, sub.name AS subjectName, sub.code,
-       u.fullName AS lecturerName,
-       sec.id AS sectionId, sec.name AS sectionName, sec.deadline,
-       COUNT(DISTINCT sf.id)                                        AS totalSubfolders,
-       COUNT(DISTINCT CASE WHEN sf.isCompleted = 1 THEN sf.id END) AS completedSubfolders
-     FROM SUBJECT sub
-     JOIN USER u    ON u.id  = sub.lecturerId
-     JOIN SECTION sec   ON sec.subjectId = sub.id
-     LEFT JOIN SUBFOLDER sf ON sf.sectionId = sec.id
-     GROUP BY sub.id, sec.id`
-  )
-  res.json(rows)
+  const subjects = await Subject.findAllWithSections()
+  res.json({ subjects })
 })
 
-// UC-16 — Update section comment (Lecturer/PIC)
-exports.updateComment = asyncHandler(async (req, res) => {
-  await Comment.upsert(req.params.sectionId, req.body.body, req.user.id)
-  res.json({ message: 'Comment saved' })
-})
-
+// Section comment — PIC/Lecturer writes notes per section
+// GET /api/dashboard/sections/:sectionId/comment
 exports.getComment = asyncHandler(async (req, res) => {
   const comment = await Comment.findBySection(req.params.sectionId)
   res.json(comment || { body: '' })
+})
+
+// PUT /api/sections/:sectionId/comment  (also reachable via /api/dashboard/sections/:sectionId/comment)
+exports.updateComment = asyncHandler(async (req, res) => {
+  // client sends { text } — also accept legacy { body }
+  const content = req.body.text ?? req.body.body ?? ''
+  await Comment.upsert(req.params.sectionId, content, req.user.id)
+  res.json({ message: 'Comment saved' })
 })

@@ -1,9 +1,14 @@
 const pool = require('../config/db')
 
 const FileVersion = {
+  // Returns version history with uploader name — used by version history modal
   async findByFile(fileId) {
     const [rows] = await pool.query(
-      'SELECT * FROM FILEVERSION WHERE fileId = ? ORDER BY versionNumber DESC',
+      `SELECT fv.*, u.fullName AS uploadedByName
+       FROM FILEVERSION fv
+       JOIN USER u ON u.id = fv.uploadedBy
+       WHERE fv.fileId = ?
+       ORDER BY fv.versionNumber DESC`,
       [fileId]
     )
     return rows
@@ -22,16 +27,19 @@ const FileVersion = {
     return (rows[0].maxVer || 0) + 1
   },
 
-  // Add a new version and set it as current; mark all others non-current
-  async addVersion({ fileId, url, cloudinaryPublicId, uploadedBy }) {
+  // Add a new version, set it as current, mark all others non-current
+  // fileSize is optional (from multer/cloudinary)
+  async addVersion({ fileId, url, cloudinaryPublicId, fileSize, uploadedBy }) {
     const conn = await pool.getConnection()
     try {
       await conn.beginTransaction()
       const versionNumber = await this.getNextVersionNumber(fileId)
       await conn.query('UPDATE FILEVERSION SET isCurrent = 0 WHERE fileId = ?', [fileId])
       const [result] = await conn.query(
-        'INSERT INTO FILEVERSION (fileId, url, cloudinaryPublicId, versionNumber, isCurrent, uploadedBy) VALUES (?, ?, ?, ?, 1, ?)',
-        [fileId, url, cloudinaryPublicId, versionNumber, uploadedBy]
+        `INSERT INTO FILEVERSION
+           (fileId, url, cloudinaryPublicId, fileSize, versionNumber, isCurrent, uploadedBy)
+         VALUES (?, ?, ?, ?, ?, 1, ?)`,
+        [fileId, url, cloudinaryPublicId || null, fileSize || null, versionNumber, uploadedBy]
       )
       await conn.commit()
       return result.insertId
@@ -48,9 +56,10 @@ const FileVersion = {
     const version = await this.findById(versionId)
     if (!version) throw Object.assign(new Error('Version not found'), { status: 404 })
     return this.addVersion({
-      fileId: version.fileId,
-      url: version.url,
+      fileId:             version.fileId,
+      url:                version.url,
       cloudinaryPublicId: version.cloudinaryPublicId,
+      fileSize:           version.fileSize,
       uploadedBy,
     })
   },
