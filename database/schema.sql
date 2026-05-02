@@ -159,6 +159,6 @@ CREATE TABLE IF NOT EXISTS AUDIT_LOG (
 -- Hash generated with: bcrypt.hash('Password123!', 12)
 -- ─────────────────────────────────────────────
 INSERT IGNORE INTO USER (fullName, email, passwordHash, role) VALUES
-('Programme Coordinator', 'pic@utm.my',      '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'PIC'),
-('Test Lecturer',         'lecturer@utm.my', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Lecturer'),
-('Audit Officer',         'audit@utm.my',    '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Audit');
+('Programme Coordinator', 'pic@utm.my',      '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'PIC'),
+('Test Lecturer',         'lecturer@utm.my', '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'Lecturer'),
+('Audit Officer',         'audit@utm.my',    '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'Audit');

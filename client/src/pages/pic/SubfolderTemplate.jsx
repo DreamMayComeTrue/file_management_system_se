@@ -14,12 +14,13 @@ export default function SubfolderTemplate() {
   const [confirmSave, setConfirmSave] = useState(false)
   const [dirty, setDirty]           = useState(false)
 
-  const { data: template = [], isLoading } = useQuery({
+  const { data: template, isLoading } = useQuery({
     queryKey: ['subfolderTemplate'],
     queryFn:  () => subjectService.getTemplate().then(r => r.data),
   })
 
   useEffect(() => {
+    if (!template) return
     setNames(template.map(t => t.name))
     setDirty(false)
   }, [template])

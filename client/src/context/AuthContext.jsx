@@ -21,6 +21,8 @@ export function AuthProvider({ children }) {
 
   function login(newToken) {
     localStorage.setItem('token', newToken)
+    const payload = JSON.parse(atob(newToken.split('.')[1]))
+    setUser({ id: payload.id, fullName: payload.fullName, role: payload.role })
     setToken(newToken)
   }
 
