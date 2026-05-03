@@ -8,12 +8,10 @@ import StatusBadge from '../../components/common/StatusBadge.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
 
 function sectionStatus(sec) {
-  if (!sec.deadline) return 'in-progress'
+  if (sec.allComplete)                              return 'complete'
   const now = new Date()
-  const dl  = new Date(sec.deadline)
-  if (sec.allComplete)      return 'complete'
-  if (dl < now)             return 'overdue'
-  return 'incomplete'
+  if (sec.deadline && new Date(sec.deadline) < now) return 'overdue'
+  return 'in-progress'
 }
 
 export default function ProgrammeDashboard() {
@@ -44,7 +42,7 @@ export default function ProgrammeDashboard() {
           <BarChart2 size={22} />
           Programme Dashboard
         </h1>
-        <p className="page-subtitle">Overview of all subjects and section submission statuses.</p>
+
       </div>
 
       {/* Stats */}
@@ -93,7 +91,8 @@ export default function ProgrammeDashboard() {
                 {subject.code} — {subject.name}
               </div>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                {subject.programme} · Sem {subject.semester} · {subject.academicYear}
+                Sem {subject.semester} · {subject.academicYear}
+                {subject.lecturerName ? ` · ${subject.lecturerName}` : ''}
               </span>
             </div>
 

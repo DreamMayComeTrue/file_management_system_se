@@ -44,7 +44,7 @@ export default function AuditLog() {
           <Clock size={22} />
           Audit Log
         </h1>
-        <p className="page-subtitle">Track all file upload, delete, and restore actions.</p>
+
       </div>
 
       {/* Filters */}

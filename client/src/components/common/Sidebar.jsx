@@ -33,6 +33,7 @@ const NAV = {
         { label: 'Programme Dashboard', to: '/programme-dashboard', icon: BarChart2 },
         { label: 'Subjects & Sections', to: '/subjects-sections',   icon: FolderKanban },
         { label: 'Subfolder Template',  to: '/subfolder-template',  icon: FolderTree },
+        { label: 'Manage Lecturers',    to: '/manage-lecturers',    icon: Settings },
         { label: 'Audit Log',           to: '/audit-log',           icon: Clock },
       ],
     },
@@ -119,7 +120,7 @@ export default function Sidebar() {
         </div>
         <button className="sidebar-logout" onClick={handleLogout}>
           <LogOut size={13} />
-          Sign out
+          Log out
         </button>
       </div>
     </aside>

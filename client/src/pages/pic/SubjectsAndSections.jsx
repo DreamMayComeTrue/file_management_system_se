@@ -1,17 +1,42 @@
 // FR-10 — View All Subjects and Sections (PIC)
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { FolderKanban, Plus, BookOpen, AlertTriangle, ChevronRight, Calendar, Settings } from 'lucide-react'
+import { FolderKanban, Plus, BookOpen, AlertTriangle, ChevronRight, Calendar, Settings, Trash2 } from 'lucide-react'
+import { toast } from 'react-toastify'
 import { subjectService } from '../../services/subjectService.js'
 import Spinner from '../../components/common/Spinner.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
+import ConfirmDialog from '../../components/common/ConfirmDialog.jsx'
 
 export default function SubjectsAndSections() {
   const navigate = useNavigate()
+  const qc       = useQueryClient()
+
+  // { type: 'subject'|'section', id, label }
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const { data: subjects = [], isLoading, isError } = useQuery({
     queryKey: ['allSubjects'],
     queryFn:  () => subjectService.getAllSubjects().then(r => r.data),
+  })
+
+  const deleteMut = useMutation({
+    mutationFn: ({ type, id }) =>
+      type === 'subject'
+        ? subjectService.deleteSubject(id)
+        : subjectService.deleteSection(id),
+    onSuccess: (_, { type }) => {
+      toast.success(`${type === 'subject' ? 'Subject' : 'Section'} deleted.`)
+      qc.invalidateQueries({ queryKey: ['allSubjects'] })
+      qc.invalidateQueries({ queryKey: ['programmeDashboard'] })
+      qc.invalidateQueries({ queryKey: ['mySubjects'] })
+      setDeleteTarget(null)
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message ?? 'Delete failed.')
+      setDeleteTarget(null)
+    },
   })
 
   if (isLoading) return <Spinner center size="lg" />
@@ -29,7 +54,7 @@ export default function SubjectsAndSections() {
             <FolderKanban size={22} />
             Subjects &amp; Sections
           </h1>
-          <p className="page-subtitle">Manage all subjects, sections, and deadlines.</p>
+
         </div>
         <button className="btn btn-primary" onClick={() => navigate('/subjects/create')}>
           <Plus size={15} /> Create Subject
@@ -59,7 +84,8 @@ export default function SubjectsAndSections() {
                   {subject.code} — {subject.name}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                  {subject.programme} · Semester {subject.semester} · {subject.academicYear}
+                  Semester {subject.semester} · {subject.academicYear}
+                  {subject.lecturerName ? ` · ${subject.lecturerName}` : ''}
                 </div>
               </div>
               <div className="card-actions">
@@ -68,6 +94,18 @@ export default function SubjectsAndSections() {
                   onClick={() => navigate(`/subjects/${subject.id}/sections/create`)}
                 >
                   <Plus size={13} /> Add Section
+                </button>
+                <button
+                  className="btn btn-icon"
+                  title="Delete subject"
+                  style={{ color: 'var(--color-incomplete)' }}
+                  onClick={() => setDeleteTarget({
+                    type:  'subject',
+                    id:    subject.id,
+                    label: `subject "${subject.code} — ${subject.name}" and all its sections`,
+                  })}
+                >
+                  <Trash2 size={15} />
                 </button>
               </div>
             </div>
@@ -132,6 +170,18 @@ export default function SubjectsAndSections() {
                     >
                       <ChevronRight size={14} />
                     </button>
+                    <button
+                      className="btn btn-icon"
+                      title="Delete section"
+                      style={{ color: 'var(--color-incomplete)' }}
+                      onClick={() => setDeleteTarget({
+                        type:  'section',
+                        id:    sec.id,
+                        label: `Section ${sec.sectionNumber} and all its files`,
+                      })}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               ))
@@ -139,6 +189,16 @@ export default function SubjectsAndSections() {
           </div>
         ))
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteMut.mutate(deleteTarget)}
+        title={deleteTarget?.type === 'subject' ? 'Delete Subject' : 'Delete Section'}
+        message={`Are you sure you want to delete this ${deleteTarget?.label}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        loading={deleteMut.isPending}
+      />
     </div>
   )
 }

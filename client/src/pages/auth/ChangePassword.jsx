@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
+import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { authService } from '../../services/authService.js'
 import Spinner from '../../components/common/Spinner.jsx'
@@ -44,10 +44,12 @@ export default function ChangePassword() {
   }
 
   return (
-    <div className="page-container" style={{ maxWidth: 560 }}>
+    <div className="page-container">
       <div className="page-header">
-        <h1 className="page-title">Change Password</h1>
-        <p className="page-subtitle">Update your account password. You will be signed out after changing.</p>
+        <div>
+          <h1 className="page-title">Change Password</h1>
+
+        </div>
       </div>
 
       <div className="card">
@@ -133,6 +135,7 @@ export default function ChangePassword() {
           </form>
         </div>
       </div>
+
     </div>
   )
 }

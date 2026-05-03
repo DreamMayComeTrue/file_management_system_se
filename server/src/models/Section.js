@@ -23,6 +23,23 @@ const Section = {
     return rows[0] || null
   },
 
+  // Lightweight fetch used by SetDeadline page
+  async findByIdSimple(id) {
+    const [rows] = await pool.query(
+      `SELECT sec.id, sec.sectionNumber, sec.deadline, sec.subjectId,
+              sub.code AS subjectCode, sub.name AS subjectName
+       FROM SECTION sec
+       JOIN SUBJECT sub ON sub.id = sec.subjectId
+       WHERE sec.id = ?`,
+      [id]
+    )
+    return rows[0] || null
+  },
+
+  async deleteById(id) {
+    await pool.query('DELETE FROM SECTION WHERE id = ?', [id])
+  },
+
   // Full section detail: section + subject + subfolders (each with files)
   // Used by getSection endpoint
   async findByIdWithDetails(id) {
@@ -98,10 +115,10 @@ const Section = {
     return section
   },
 
-  async create({ sectionNumber, subjectId, deadline }) {
+  async create({ sectionNumber, subjectId, deadline, lecturerId }) {
     const [result] = await pool.query(
-      'INSERT INTO SECTION (sectionNumber, subjectId, deadline) VALUES (?, ?, ?)',
-      [sectionNumber, subjectId, deadline || null]
+      'INSERT INTO SECTION (sectionNumber, subjectId, deadline, lecturerId) VALUES (?, ?, ?, ?)',
+      [sectionNumber, subjectId, deadline || null, lecturerId || null]
     )
     return result.insertId
   },

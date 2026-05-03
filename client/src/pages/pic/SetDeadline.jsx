@@ -1,6 +1,6 @@
 // UC-13 — Set and Extend Submission Deadline
 import { useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { Calendar, AlertCircle, ArrowLeft, Info, AlertTriangle } from 'lucide-react'
 import { toast } from 'react-toastify'
@@ -11,6 +11,7 @@ import Spinner from '../../components/common/Spinner.jsx'
 export default function SetDeadline() {
   const { sectionId } = useParams()
   const navigate      = useNavigate()
+  const qc            = useQueryClient()
 
   /* We need section info — fetch via a dedicated section-only endpoint if available,
      or derive from the dashboard data. For now we use a section query if defined.
@@ -39,6 +40,9 @@ export default function SetDeadline() {
         reason:   data.reason || undefined,
       })
       toast.success(isExtension ? 'Deadline extended.' : 'Deadline set.')
+      await qc.invalidateQueries({ queryKey: ['allSubjects'] })
+      await qc.invalidateQueries({ queryKey: ['programmeDashboard'] })
+      await qc.invalidateQueries({ queryKey: ['sectionById', sectionId] })
       navigate('/subjects-sections')
     } catch (err) {
       toast.error(err.response?.data?.message ?? 'Failed to set deadline.')
@@ -63,10 +67,7 @@ export default function SetDeadline() {
           <Calendar size={22} />
           {isExtension ? 'Extend Deadline' : 'Set Deadline'}
         </h1>
-        <p className="page-subtitle">
-          Section {section?.sectionNumber} ·{' '}
-          {section?.subjectCode} — {section?.subjectName}
-        </p>
+
       </div>
 
       {/* Existing deadline notice */}

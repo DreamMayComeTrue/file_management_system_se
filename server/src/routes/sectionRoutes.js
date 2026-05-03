@@ -7,6 +7,12 @@ const authorize    = require('../middleware/authorize')
 
 router.use(authenticate)
 
+// GET  /api/sections/:id — lightweight section info for SetDeadline page
+router.get('/:id',             authorize('PIC', 'Lecturer', 'Audit'), ctrl.getSectionSimple)
+
+// DELETE /api/sections/:id
+router.delete('/:id',          authorize('PIC'),                      ctrl.deleteSection)
+
 // PUT  /api/sections/:id/deadline
 router.put('/:id/deadline',    authorize('PIC'),                      ctrl.setDeadline)
 

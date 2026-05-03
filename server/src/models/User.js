@@ -41,6 +41,18 @@ const User = {
   async clearResetToken(id) {
     await pool.query('UPDATE USER SET resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?', [id])
   },
+
+  async findAllLecturers() {
+    const [rows] = await pool.query(
+      'SELECT id, fullName, email, role FROM USER WHERE role IN (?, ?) ORDER BY fullName ASC',
+      ['Lecturer', 'PIC']
+    )
+    return rows
+  },
+
+  async deleteById(id) {
+    await pool.query('DELETE FROM USER WHERE id = ? AND role = ?', [id, 'Lecturer'])
+  },
 }
 
 module.exports = User

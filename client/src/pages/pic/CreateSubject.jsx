@@ -1,17 +1,18 @@
 // UC-05 — Create Subject
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useQueryClient } from '@tanstack/react-query'
 import { BookOpen, AlertCircle, ArrowLeft } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { subjectService } from '../../services/subjectService.js'
 import Spinner from '../../components/common/Spinner.jsx'
 
-const PROGRAMMES = ['SECP', 'SECV', 'SECJ', 'SECI', 'SECB', 'SEAT', 'SEWB']
-const SEMESTERS  = [1, 2]
-const YEARS      = Array.from({ length: 6 }, (_, i) => `${2023 + i}/${2024 + i}`)
+const SEMESTERS = [1, 2]
+const YEARS     = Array.from({ length: 6 }, (_, i) => `${2023 + i}/${2024 + i}`)
 
 export default function CreateSubject() {
   const navigate = useNavigate()
+  const qc       = useQueryClient()
 
   const {
     register,
@@ -23,6 +24,9 @@ export default function CreateSubject() {
     try {
       await subjectService.createSubject(data)
       toast.success(`Subject "${data.code}" created.`)
+      await qc.invalidateQueries({ queryKey: ['allSubjects'] })
+      await qc.invalidateQueries({ queryKey: ['programmeDashboard'] })
+      await qc.invalidateQueries({ queryKey: ['mySubjects'] })
       navigate('/subjects-sections')
     } catch (err) {
       toast.error(err.response?.data?.message ?? 'Failed to create subject.')
@@ -41,12 +45,13 @@ export default function CreateSubject() {
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <BookOpen size={22} /> Create Subject
         </h1>
-        <p className="page-subtitle">Add a new subject to the system.</p>
+
       </div>
 
       <div className="card">
         <div className="card-body">
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
+
             {/* Subject Code */}
             <div className="form-group">
               <label className="form-label form-label-required">Subject Code</label>
@@ -72,19 +77,6 @@ export default function CreateSubject() {
                 {...register('name', { required: 'Subject name is required' })}
               />
               {errors.name && <span className="form-error"><AlertCircle size={12} />{errors.name.message}</span>}
-            </div>
-
-            {/* Programme */}
-            <div className="form-group">
-              <label className="form-label form-label-required">Programme</label>
-              <select
-                className={`form-input${errors.programme ? ' error' : ''}`}
-                {...register('programme', { required: 'Programme is required' })}
-              >
-                <option value="">— Select programme —</option>
-                {PROGRAMMES.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-              {errors.programme && <span className="form-error"><AlertCircle size={12} />{errors.programme.message}</span>}
             </div>
 
             {/* Semester + Academic Year side by side */}

@@ -1,15 +1,17 @@
 // UC-06 — Create Section + Auto-Generate Sub-Folders from Template
 import { useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { FolderKanban, AlertCircle, ArrowLeft, Info } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { subjectService } from '../../services/subjectService.js'
+import { userService } from '../../services/userService.js'
 import Spinner from '../../components/common/Spinner.jsx'
 
 export default function CreateSection() {
   const { subjectId } = useParams()
   const navigate      = useNavigate()
+  const qc            = useQueryClient()
 
   /* Load subject info */
   const { data: subject, isLoading: loadingSubject } = useQuery({
@@ -23,6 +25,12 @@ export default function CreateSection() {
     queryFn:  () => subjectService.getTemplate().then(r => r.data),
   })
 
+  /* Load lecturers for dropdown */
+  const { data: lecturers = [], isLoading: loadingLecturers } = useQuery({
+    queryKey: ['lecturers'],
+    queryFn:  () => userService.getLecturers().then(r => r.data),
+  })
+
   const {
     register,
     handleSubmit,
@@ -31,8 +39,14 @@ export default function CreateSection() {
 
   async function onSubmit(data) {
     try {
-      await subjectService.createSection(subjectId, { sectionNumber: data.sectionNumber })
+      await subjectService.createSection(subjectId, {
+        sectionNumber: data.sectionNumber,
+        lecturerId:    data.lecturerId || null,
+      })
       toast.success(`Section ${data.sectionNumber} created with ${template.length} subfolder(s).`)
+      await qc.invalidateQueries({ queryKey: ['allSubjects'] })
+      await qc.invalidateQueries({ queryKey: ['programmeDashboard'] })
+      await qc.invalidateQueries({ queryKey: ['mySubjects'] })
       navigate('/subjects-sections')
     } catch (err) {
       toast.error(err.response?.data?.message ?? 'Failed to create section.')
@@ -55,15 +69,15 @@ export default function CreateSection() {
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <FolderKanban size={22} /> Create Section
         </h1>
-        <p className="page-subtitle">
-          For <strong>{subject?.code} — {subject?.name}</strong>
-        </p>
+
       </div>
 
       <div className="card" style={{ marginBottom: '1rem' }}>
         <div className="card-body">
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+
+            {/* Section Number */}
+            <div className="form-group">
               <label className="form-label form-label-required">Section Number</label>
               <input
                 type="text"
@@ -78,11 +92,35 @@ export default function CreateSection() {
               <p className="form-hint">This will identify the section (e.g. 01, 02, A, B).</p>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            {/* Assign Lecturer */}
+            <div className="form-group">
+              <label className="form-label form-label-required">Assign Lecturer</label>
+              {loadingLecturers ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                  <Spinner size="sm" /> Loading lecturers…
+                </div>
+              ) : (
+                <select
+                  className={`form-input${errors.lecturerId ? ' error' : ''}`}
+                  {...register('lecturerId', { required: 'Please assign a lecturer to this section' })}
+                >
+                  <option value="">— Select lecturer —</option>
+                  {lecturers.map(l => (
+                    <option key={l.id} value={l.id}>
+                      {l.fullName} ({l.role}) — {l.email}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {errors.lecturerId && <span className="form-error"><AlertCircle size={12} />{errors.lecturerId.message}</span>}
+              <p className="form-hint">Each section can have a different lecturer. Add lecturers first under Manage Lecturers.</p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem' }}>
               <button type="button" className="btn btn-secondary" onClick={() => navigate('/subjects-sections')}>
                 <ArrowLeft size={14} /> Cancel
               </button>
-              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              <button type="submit" className="btn btn-primary" disabled={isSubmitting || loadingLecturers}>
                 {isSubmitting ? <><Spinner size="sm" /> Creating…</> : 'Create Section'}
               </button>
             </div>

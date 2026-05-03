@@ -372,7 +372,7 @@ export default function SubfolderView() {
           <h1 className="page-title">
             {subject.code} — Section {section.sectionNumber}
           </h1>
-          <p className="page-subtitle">{subject.name} · {subject.programme}</p>
+
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
           {deadline && (

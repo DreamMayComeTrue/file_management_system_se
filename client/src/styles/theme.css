@@ -2,41 +2,49 @@
   /* ── Brand Colours ── */
   --color-primary:        #C62828;
   --color-primary-hover:  #8B1A1A;
-  --color-primary-light:  #EF5350;
+  --color-primary-light:  rgba(198,40,40,0.15);
   --color-accent:         #D4AF37;
-  --color-accent-light:   #F0CE5E;
+  --color-accent-hover:   #B8962E;
+  --color-accent-light:   rgba(212,175,55,0.15);
   --color-accent-dim:     #A68A20;
   --color-dark:           #000000;
 
   /* ── Backgrounds (dark theme) ── */
-  --color-bg:             #0D0D0D;
-  --color-surface:        #161616;
-  --color-surface-alt:    #202020;
-  --color-sidebar:        #0A0A0A;
-  --color-sidebar-hover:  #1C1C1C;
+  --color-bg:             #0A0A0A;
+  --color-surface:        #141414;
+  --color-surface-alt:    #1C1C1C;
+  --color-surface-raised: #222222;
+  --color-sidebar:        #080808;
+  --color-sidebar-hover:  #161616;
 
   /* ── Text ── */
-  --color-text:           #EFEFEF;
-  --color-text-muted:     #888888;
+  --color-text:           #F0F0F0;
+  --color-text-muted:     #7A7A7A;
+  --color-text-subtle:    #4A4A4A;
   --color-text-inverse:   #FFFFFF;
   --color-text-accent:    #D4AF37;
+  --color-text-gold:      #D4AF37;
 
   /* ── Status ── */
-  --color-complete:       #4CAF50;
-  --color-complete-bg:    rgba(76, 175, 80, 0.12);
-  --color-incomplete:     #EF5350;
-  --color-incomplete-bg:  rgba(239, 83, 80, 0.12);
-  --color-overdue:        #D4AF37;
-  --color-overdue-bg:     rgba(212, 175, 55, 0.12);
-  --color-in-progress:    #5B9BD5;
-  --color-in-progress-bg: rgba(91, 155, 213, 0.12);
+  --color-complete:       #43A047;
+  --color-complete-bg:    rgba(67,160,71,0.10);
+  --color-incomplete:     #E53935;
+  --color-incomplete-bg:  rgba(229,57,53,0.10);
+  --color-overdue:        #E65100;
+  --color-overdue-bg:     rgba(230,81,0,0.10);
+  --color-in-progress:    #D4AF37;
+  --color-in-progress-bg: rgba(212,175,55,0.10);
 
   /* ── Border & Shadow ── */
-  --color-border:         #2A2A2A;
-  --color-border-strong:  #3D3D3D;
-  --shadow-sm:            0 1px 4px rgba(0,0,0,0.5);
-  --shadow-card:          0 2px 10px rgba(0,0,0,0.6);
-  --shadow-modal:         0 8px 40px rgba(0,0,0,0.8);
+  --color-border:         #242424;
+  --color-border-strong:  #333333;
+  --color-gold-border:    rgba(212,175,55,0.3);
+  --shadow-sm:            0 1px 4px rgba(0,0,0,0.6);
+  --shadow-card:          0 2px 12px rgba(0,0,0,0.5);
+  --shadow-card-gold:     0 2px 16px rgba(212,175,55,0.06);
+  --shadow-modal:         0 12px 48px rgba(0,0,0,0.85);
+  --shadow-glow-red:      0 0 20px rgba(198,40,40,0.2);
+  --shadow-glow-gold:     0 0 20px rgba(212,175,55,0.15);
 
   /* ── Typography ── */
   --font-sans:            'Inter', system-ui, sans-serif;

@@ -67,20 +67,20 @@ export default function SubfolderTemplate() {
   if (isLoading) return <Spinner center size="lg" />
 
   return (
-    <div className="page-container" style={{ maxWidth: 640 }}>
+    <div className="page-container">
       <div className="page-header">
-        <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <FolderTree size={22} />
-          Subfolder Template
-        </h1>
-        <p className="page-subtitle">
-          Define the default subfolders auto-created when a new section is added.
-        </p>
+        <div>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <FolderTree size={22} />
+            Subfolder Template
+          </h1>
+
+        </div>
       </div>
 
       <div className="alert alert-info" style={{ marginBottom: '1.25rem' }}>
         <Info size={16} style={{ flexShrink: 0 }} />
-        Changes here only affect <strong>new</strong> sections. Existing sections are not modified.
+        <span>Changes here only affect <strong>new</strong> sections. Existing sections are not modified.</span>
       </div>
 
       <div className="card">

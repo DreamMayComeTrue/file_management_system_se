@@ -51,7 +51,7 @@ export default function Login() {
         <div className="auth-brand">
           <img src={logo} alt="SOF-EA UTM" className="auth-logo-img" />
           <h1 className="auth-title">File Management System</h1>
-          <p className="auth-subtitle">Sign in to your account to continue</p>
+          <p className="auth-subtitle">Log in to your account to continue</p>
         </div>
 
         {/* Error */}
@@ -122,7 +122,7 @@ export default function Login() {
             className="btn btn-primary btn-full btn-lg"
             disabled={isSubmitting}
           >
-            {isSubmitting ? <><Spinner size="sm" /> Signing in…</> : 'Sign in'}
+            {isSubmitting ? <><Spinner size="sm" /> Logging in…</> : 'Log in'}
           </button>
         </form>
       </div>

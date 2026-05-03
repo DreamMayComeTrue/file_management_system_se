@@ -56,7 +56,7 @@ export default function ExportReport() {
           <FileText size={22} />
           Export Report
         </h1>
-        <p className="page-subtitle">Generate and download submission progress reports.</p>
+
       </div>
 
       <div className="card">

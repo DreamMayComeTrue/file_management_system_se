@@ -8,12 +8,10 @@ import StatusBadge from '../../components/common/StatusBadge.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
 
 function sectionStatus(sec) {
-  if (!sec.deadline) return 'in-progress'
+  if (sec.allComplete)                              return 'complete'
   const now = new Date()
-  const dl  = new Date(sec.deadline)
-  if (sec.allComplete)      return 'complete'
-  if (dl < now)             return 'overdue'
-  return 'incomplete'
+  if (sec.deadline && new Date(sec.deadline) < now) return 'overdue'
+  return 'in-progress'
 }
 
 export default function MySubjects() {
@@ -38,7 +36,7 @@ export default function MySubjects() {
           <BookOpen size={22} />
           My Subjects
         </h1>
-        <p className="page-subtitle">Click a section to open the subfolder upload view.</p>
+
       </div>
 
       {subjects.length === 0 ? (
@@ -60,7 +58,7 @@ export default function MySubjects() {
                   {subject.code} — {subject.name}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                  {subject.programme} · Semester {subject.semester} · {subject.academicYear}
+                  Semester {subject.semester} · {subject.academicYear}
                 </div>
               </div>
               <span className="badge badge-neutral">{subject.sections?.length ?? 0} section{subject.sections?.length !== 1 ? 's' : ''}</span>

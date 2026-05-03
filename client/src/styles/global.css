@@ -34,7 +34,7 @@ input, textarea, select {
 ::-webkit-scrollbar        { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track  { background: var(--color-surface-alt); }
 ::-webkit-scrollbar-thumb  { background: var(--color-border-strong); border-radius: var(--radius-full); }
-::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
 
 /* Toast overrides */
 .Toastify__toast {

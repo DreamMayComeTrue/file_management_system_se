@@ -143,7 +143,7 @@ export default function SectionDetail() {
       <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
         <div>
           <h1 className="page-title">{subject.code} — Section {section.sectionNumber}</h1>
-          <p className="page-subtitle">{subject.name} · {subject.programme}</p>
+
         </div>
         <div className="card-actions">
           <button

@@ -162,3 +162,10 @@ INSERT IGNORE INTO USER (fullName, email, passwordHash, role) VALUES
 ('Programme Coordinator', 'pic@utm.my',      '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'PIC'),
 ('Test Lecturer',         'lecturer@utm.my', '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'Lecturer'),
 ('Audit Officer',         'audit@utm.my',    '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'Audit');
+
+--UPDATE USER SET passwordHash = '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K'
+--WHERE email IN ('pic@utm.my', 'lecturer@utm.my', 'audit@utm.my');
+
+--ALTER TABLE SECTION
+--ADD COLUMN lecturerId INT UNSIGNED DEFAULT NULL,
+--ADD CONSTRAINT fk_section_lecturer FOREIGN KEY (lecturerId) REFERENCES USER(id);

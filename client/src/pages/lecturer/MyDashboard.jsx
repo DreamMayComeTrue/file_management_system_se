@@ -9,12 +9,10 @@ import EmptyState from '../../components/common/EmptyState.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 function sectionStatus(section) {
-  if (!section.deadline) return 'in-progress'
+  if (section.allComplete)                                    return 'complete'
   const now = new Date()
-  const dl  = new Date(section.deadline)
-  if (section.allComplete)           return 'complete'
-  if (dl < now && !section.allComplete) return 'overdue'
-  return 'incomplete'
+  if (section.deadline && new Date(section.deadline) < now)   return 'overdue'
+  return 'in-progress'
 }
 
 export default function MyDashboard() {
@@ -45,7 +43,7 @@ export default function MyDashboard() {
           <LayoutDashboard size={22} />
           My Dashboard
         </h1>
-        <p className="page-subtitle">Welcome back, {user?.fullName}. Here's your submission overview.</p>
+
       </div>
 
       {/* Stats */}

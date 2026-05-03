@@ -20,6 +20,14 @@ exports.getSubject = asyncHandler(async (req, res) => {
   res.json(subject)
 })
 
+// DELETE — PIC: delete a subject (cascades sections, subfolders, files)
+exports.deleteSubject = asyncHandler(async (req, res) => {
+  const subject = await Subject.findById(req.params.id)
+  if (!subject) return res.status(404).json({ message: 'Subject not found' })
+  await Subject.deleteById(req.params.id)
+  res.json({ message: 'Subject deleted' })
+})
+
 // UC-06 — PIC: create a new subject
 exports.createSubject = asyncHandler(async (req, res) => {
   const { name, code, programme, semester, academicYear, lecturerId } = req.body

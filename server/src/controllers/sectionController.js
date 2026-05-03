@@ -3,6 +3,21 @@ const Subfolder    = require('../models/Subfolder')
 const DeadlineLog  = require('../models/DeadlineLog')
 const asyncHandler = require('../utils/asyncHandler')
 
+// GET /api/sections/:id — lightweight section info (used by SetDeadline page)
+exports.getSectionSimple = asyncHandler(async (req, res) => {
+  const section = await Section.findByIdSimple(req.params.id)
+  if (!section) return res.status(404).json({ message: 'Section not found' })
+  res.json(section)
+})
+
+// DELETE /api/sections/:id — PIC deletes a section (cascades subfolders + files)
+exports.deleteSection = asyncHandler(async (req, res) => {
+  const section = await Section.findById(req.params.id)
+  if (!section) return res.status(404).json({ message: 'Section not found' })
+  await Section.deleteById(req.params.id)
+  res.json({ message: 'Section deleted' })
+})
+
 // GET /api/subjects/:id/sections — list sections for a subject (flat with stats)
 exports.getSections = asyncHandler(async (req, res) => {
   const sections = await Section.findBySubject(req.params.id)
@@ -24,6 +39,7 @@ exports.createSection = asyncHandler(async (req, res) => {
     sectionNumber: req.body.sectionNumber,
     subjectId:     req.params.id,
     deadline:      req.body.deadline || null,
+    lecturerId:    req.body.lecturerId || null,
   })
   // Auto-apply subfolder template
   const template = await Subfolder.getTemplate()

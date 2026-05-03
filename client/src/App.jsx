@@ -20,6 +20,7 @@ import SubfolderView from './pages/lecturer/SubfolderView.jsx'
 import ProgrammeDashboard from './pages/pic/ProgrammeDashboard.jsx'
 import SubjectsAndSections from './pages/pic/SubjectsAndSections.jsx'
 import CreateSubject from './pages/pic/CreateSubject.jsx'
+import ManageLecturers from './pages/pic/ManageLecturers.jsx'
 import CreateSection from './pages/pic/CreateSection.jsx'
 import SubfolderTemplate from './pages/pic/SubfolderTemplate.jsx'
 import SectionDetail from './pages/pic/SectionDetail.jsx'
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="/subjects/:subjectId/sections/create" element={<CreateSection />} />
             <Route path="/subjects/:subjectId/sections/:sectionId" element={<SectionDetail />} />
             <Route path="/subfolder-template"   element={<SubfolderTemplate />} />
+            <Route path="/manage-lecturers"     element={<ManageLecturers />} />
             <Route path="/set-deadline/:sectionId" element={<SetDeadline />} />
             <Route path="/audit-log"            element={<AuditLog />} />
           </Route>

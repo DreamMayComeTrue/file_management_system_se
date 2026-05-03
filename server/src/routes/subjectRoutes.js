@@ -12,6 +12,7 @@ router.get('/',     authorize('PIC', 'Audit'),              subjectCtrl.getAllSu
 router.get('/mine', authorize('Lecturer', 'PIC'),           subjectCtrl.getMySubjects)
 router.get('/:id',  authorize('Lecturer', 'PIC', 'Audit'),  subjectCtrl.getSubject)
 router.post('/',    authorize('PIC'),                       subjectCtrl.createSubject)
+router.delete('/:id', authorize('PIC'),                    subjectCtrl.deleteSubject)
 
 // Section sub-routes (nested under /subjects/:id/sections)
 router.get( '/:id/sections',              authorize('Lecturer', 'PIC', 'Audit'), sectionCtrl.getSections)

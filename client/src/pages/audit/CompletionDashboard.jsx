@@ -41,7 +41,7 @@ export default function CompletionDashboard() {
           <ListChecks size={22} />
           Completion Dashboard
         </h1>
-        <p className="page-subtitle">Read-only overview of all programme submission statuses.</p>
+
       </div>
 
       {/* Stats */}
