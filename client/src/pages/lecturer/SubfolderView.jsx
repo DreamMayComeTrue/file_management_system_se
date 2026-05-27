@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDropzone } from 'react-dropzone'
 import {
   ArrowLeft, Upload, File, Trash2, History, CheckSquare, XSquare,
-  RefreshCw, ChevronDown, ChevronRight, AlertTriangle, Calendar, Download
+  RefreshCw, ChevronDown, ChevronRight, AlertTriangle, Calendar, Download, Eye
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { subjectService } from '../../services/subjectService.js'
@@ -15,6 +15,7 @@ import StatusBadge from '../../components/common/StatusBadge.jsx'
 import Modal from '../../components/common/Modal.jsx'
 import ConfirmDialog from '../../components/common/ConfirmDialog.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
+import SectionComment from '../../components/common/SectionComment.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 /* ── helpers ── */
@@ -27,6 +28,44 @@ function fmt(bytes) {
 function fmtDate(d) {
   if (!d) return '—'
   return new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+/* Download a file with its real name (Cloudinary URLs ignore the <a download> attr cross-origin) */
+async function downloadFile(url, fileName) {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('fetch failed')
+    const blob = await res.blob()
+    const objUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objUrl
+    a.download = fileName || 'download'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objUrl)
+  } catch {
+    window.open(url, '_blank')   // fallback: open in a new tab
+  }
+}
+/* Open a file preview in a new tab — forces the correct MIME so PDFs/images render inline */
+async function previewFile(url, fileName) {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('fetch failed')
+    const blob = await res.blob()
+    const ext  = (fileName || '').split('.').pop().toLowerCase()
+    const mimeByExt = {
+      pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg',
+      jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', txt: 'text/plain',
+    }
+    const mime   = mimeByExt[ext] || blob.type || 'application/octet-stream'
+    const objUrl = URL.createObjectURL(new Blob([blob], { type: mime }))
+    const win    = window.open(objUrl, '_blank')
+    setTimeout(() => URL.revokeObjectURL(objUrl), 60000)
+    if (!win) URL.revokeObjectURL(objUrl)
+  } catch {
+    window.open(url, '_blank')
+  }
 }
 
 /* ── Upload dropzone ── */
@@ -47,14 +86,29 @@ function DropUpload({ onFile, uploading }) {
 
 /* ── Version history modal ── */
 function VersionModal({ open, onClose, file, onRestore }) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['versions', file?.id],
     queryFn:  () => fileService.getVersions(file.id).then(r => r.data),
     enabled: open && !!file?.id,
   })
 
+  const modalTitle = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+      Version History
+      <button
+        type="button"
+        className="btn btn-icon btn-sm"
+        title="Refresh"
+        onClick={() => refetch()}
+        disabled={isFetching}
+      >
+        <RefreshCw size={15} className={isFetching ? 'spin' : undefined} />
+      </button>
+    </span>
+  )
+
   return (
-    <Modal open={open} onClose={onClose} title={`Version History — ${file?.fileName ?? ''}`} size="modal-lg">
+    <Modal open={open} onClose={onClose} title={modalTitle} size="modal-xl">
       {isLoading ? <Spinner center /> : (
         <div>
           {(!data || data.length === 0) ? (
@@ -65,6 +119,7 @@ function VersionModal({ open, onClose, file, onRestore }) {
                 <thead>
                   <tr>
                     <th>#</th>
+                    <th>File Name</th>
                     <th>Uploaded</th>
                     <th>Size</th>
                     <th>Uploaded By</th>
@@ -75,8 +130,11 @@ function VersionModal({ open, onClose, file, onRestore }) {
                   {data.map((v, i) => (
                     <tr key={v.id}>
                       <td>v{data.length - i}</td>
-                      <td>{fmtDate(v.uploadedAt)}</td>
-                      <td>{fmt(v.fileSize)}</td>
+                      <td style={{ fontSize: '0.85rem' }} title={v.originalName ?? ''}>
+                        {v.originalName ?? file?.fileName ?? '—'}
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(v.uploadedAt)}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{fmt(v.fileSize)}</td>
                       <td>{v.uploadedByName ?? '—'}</td>
                       <td>
                         {i > 0 && (
@@ -134,6 +192,7 @@ function SubfolderRow({ sf, subjectId, sectionId, onRefresh, canComplete }) {
       fd.append('file', file)
       await fileService.uploadVersion(newVersionTarget.id, fd)
       toast.success('New version uploaded.')
+      qc.invalidateQueries(['versions', newVersionTarget.id])
       setNewVersionTarget(null)
       onRefresh()
     } catch (err) {
@@ -217,16 +276,24 @@ function SubfolderRow({ sf, subjectId, sectionId, onRefresh, canComplete }) {
                   <span className="file-meta">{fmt(f.fileSize)}</span>
                   <span className="file-meta">{fmtDate(f.uploadedAt)}</span>
                   <div className="file-actions">
+                    {/* Preview */}
+                    <button
+                      type="button"
+                      className="btn btn-icon"
+                      title="Preview"
+                      onClick={() => previewFile(f.fileUrl, f.fileName)}
+                    >
+                      <Eye size={14} />
+                    </button>
                     {/* Download */}
-                    <a
-                      href={f.fileUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
                       className="btn btn-icon"
                       title="Download"
+                      onClick={() => downloadFile(f.fileUrl, f.fileName)}
                     >
                       <Download size={14} />
-                    </a>
+                    </button>
                     {/* Upload new version */}
                     {isLecturer && (
                       <button
@@ -299,7 +366,7 @@ function SubfolderRow({ sf, subjectId, sectionId, onRefresh, canComplete }) {
                     <XSquare size={14} /> Mark as Incomplete
                   </button>
                 )}
-                {sf.isCompleted && sf.completedByName && (
+                {!!sf.isCompleted && sf.completedByName && (
                   <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                     Completed by {sf.completedByName} · {fmtDate(sf.completedAt)}
                   </span>
@@ -336,6 +403,10 @@ function SubfolderRow({ sf, subjectId, sectionId, onRefresh, canComplete }) {
 export default function SubfolderView() {
   const { subjectId, sectionId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const backLink = user?.role === 'Audit'
+    ? { to: '/completion-dashboard', label: 'Completion Dashboard' }
+    : { to: '/my-subjects',          label: 'My Subjects' }
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['sectionDetail', subjectId, sectionId],
@@ -359,7 +430,7 @@ export default function SubfolderView() {
     <div className="page-container">
       {/* Breadcrumb */}
       <div className="breadcrumb">
-        <span className="breadcrumb-link" onClick={() => navigate('/my-subjects')}>My Subjects</span>
+        <span className="breadcrumb-link" onClick={() => navigate(backLink.to)}>{backLink.label}</span>
         <span className="breadcrumb-sep">/</span>
         <span>{subject.code}</span>
         <span className="breadcrumb-sep">/</span>
@@ -370,7 +441,7 @@ export default function SubfolderView() {
       <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
         <div>
           <h1 className="page-title">
-            {subject.code} — Section {section.sectionNumber}
+            {subject.code} : Section {section.sectionNumber}
           </h1>
 
         </div>
@@ -400,6 +471,9 @@ export default function SubfolderView() {
           The deadline for this section has passed. Please contact your PIC if you need an extension.
         </div>
       )}
+
+      {/* Section Notes (comment) */}
+      <SectionComment sectionId={sectionId} />
 
       {/* Subfolders */}
       {subfolders.length === 0 ? (

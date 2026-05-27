@@ -28,6 +28,7 @@ exports.upload = asyncHandler(async (req, res) => {
   })
   await FileVersion.addVersion({
     fileId,
+    originalName:       req.file.originalname,
     url:                req.file.path,
     cloudinaryPublicId: req.file.filename,
     fileSize:           req.file.size || null,
@@ -56,11 +57,14 @@ exports.uploadVersion = asyncHandler(async (req, res) => {
   }
   await FileVersion.addVersion({
     fileId:             file.id,
+    originalName:       req.file.originalname,
     url:                req.file.path,
     cloudinaryPublicId: req.file.filename,
     fileSize:           req.file.size || null,
     uploadedBy:         req.user.id,
   })
+  // Keep the displayed file name in sync with the latest version's file
+  await File.updateName(file.id, req.file.originalname)
   await AuditLog.record({
     userId:      req.user.id,
     action:      'UPLOAD',
@@ -89,14 +93,18 @@ exports.restoreVersion = asyncHandler(async (req, res) => {
   if (section.deadline && new Date() > new Date(section.deadline)) {
     return res.status(403).json({ message: 'Deadline has passed — restores are blocked' })
   }
-  await FileVersion.restore(req.params.versionId, req.user.id)
+  const restored = await FileVersion.restore(req.params.versionId, req.user.id)
+  // Sync the displayed file name to the restored version's name
+  if (restored.originalName) {
+    await File.updateName(file.id, restored.originalName)
+  }
   await AuditLog.record({
     userId:      req.user.id,
     action:      'RESTORE',
     fileId:      file.id,
     subfolderId: file.subfolderId,
     sectionId:   file.sectionId,
-    fileName:    file.originalName,
+    fileName:    restored.originalName || file.originalName,
   })
   res.json({ message: 'Version restored as new current version' })
 })

@@ -106,6 +106,20 @@ const Subject = {
       [subjectIds, userId]
     )
 
+    // Count comments per subject that were posted by OTHER people
+    // (so the lecturer sees how many notes from PIC / Audit / other lecturers
+    //  are waiting on them across all sections of that subject).
+    const [othersCmts] = await pool.query(
+      `SELECT sec.subjectId, COUNT(c.id) AS othersCount
+       FROM COMMENT c
+       JOIN SECTION sec ON sec.id = c.sectionId
+       WHERE sec.subjectId IN (?) AND sec.lecturerId = ? AND c.authorId <> ?
+       GROUP BY sec.subjectId`,
+      [subjectIds, userId, userId]
+    )
+    const otherCommentMap = {}
+    othersCmts.forEach(r => { otherCommentMap[r.subjectId] = r.othersCount })
+
     const sectMap = {}
     sections.forEach(s => {
       if (!sectMap[s.subjectId]) sectMap[s.subjectId] = []
@@ -121,7 +135,8 @@ const Subject = {
 
     return subjects.map(sub => ({
       ...sub,
-      sections: sectMap[sub.id] || [],
+      sections:           sectMap[sub.id] || [],
+      othersCommentCount: otherCommentMap[sub.id] || 0,
     }))
   },
 }

@@ -10,6 +10,7 @@ const fileRoutes      = require('./routes/fileRoutes')
 const templateRoutes  = require('./routes/subfolderTemplateRoutes')
 const dashboardRoutes = require('./routes/dashboardRoutes')
 const auditRoutes     = require('./routes/auditRoutes')
+const devRoutes       = require('./routes/devRoutes')
 
 const app = express()
 
@@ -25,6 +26,7 @@ app.use('/api/files',              fileRoutes)
 app.use('/api/subfolder-template', templateRoutes)
 app.use('/api/dashboard',          dashboardRoutes)
 app.use('/api/audit-log',          auditRoutes)
+app.use('/api/dev',                devRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err.stack)

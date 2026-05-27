@@ -21,6 +21,7 @@ import ProgrammeDashboard from './pages/pic/ProgrammeDashboard.jsx'
 import SubjectsAndSections from './pages/pic/SubjectsAndSections.jsx'
 import CreateSubject from './pages/pic/CreateSubject.jsx'
 import ManageLecturers from './pages/pic/ManageLecturers.jsx'
+import ManageAuditors from './pages/pic/ManageAuditors.jsx'
 import CreateSection from './pages/pic/CreateSection.jsx'
 import SubfolderTemplate from './pages/pic/SubfolderTemplate.jsx'
 import SectionDetail from './pages/pic/SectionDetail.jsx'
@@ -52,6 +53,12 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/my-dashboard"  element={<LecturerDashboard />} />
             <Route path="/my-subjects"   element={<LecturerSubjects />} />
+          </Route>
+        </Route>
+
+        {/* ── Section view — Lecturer, PIC AND Audit (Audit is read-only) ── */}
+        <Route element={<ProtectedRoute roles={['Lecturer', 'PIC', 'Audit']} />}>
+          <Route element={<AppLayout />}>
             <Route path="/my-subjects/:subjectId/sections/:sectionId" element={<SubfolderView />} />
           </Route>
         </Route>
@@ -66,6 +73,7 @@ export default function App() {
             <Route path="/subjects/:subjectId/sections/:sectionId" element={<SectionDetail />} />
             <Route path="/subfolder-template"   element={<SubfolderTemplate />} />
             <Route path="/manage-lecturers"     element={<ManageLecturers />} />
+            <Route path="/manage-auditors"      element={<ManageAuditors />} />
             <Route path="/set-deadline/:sectionId" element={<SetDeadline />} />
             <Route path="/audit-log"            element={<AuditLog />} />
           </Route>

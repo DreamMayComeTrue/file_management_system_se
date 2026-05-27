@@ -1,7 +1,7 @@
 // UC-12 — View Own Submission Status (Lecturer/PIC)
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { LayoutDashboard, BookOpen, CheckCircle, XCircle, AlertTriangle, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, BookOpen, CheckCircle, XCircle, AlertTriangle, ChevronRight, MessageSquare } from 'lucide-react'
 import { dashboardService } from '../../services/dashboardService.js'
 import Spinner from '../../components/common/Spinner.jsx'
 import StatusBadge from '../../components/common/StatusBadge.jsx'
@@ -22,6 +22,8 @@ export default function MyDashboard() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['myDashboard'],
     queryFn:  () => dashboardService.getMyDashboard().then(r => r.data),
+    staleTime: 30000,          // reuse data for 30s — instant on revisit
+    refetchOnWindowFocus: true, // still refresh when the tab regains focus
   })
 
   if (isLoading) return <Spinner center size="lg" />
@@ -82,7 +84,23 @@ export default function MyDashboard() {
               <div className="card-title">
                 <BookOpen size={17} />
                 <span>{subject.code}</span>
-                <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>— {subject.name}</span>
+                <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>: {subject.name}</span>
+                {subject.othersCommentCount > 0 && (
+                  <span
+                    title={`${subject.othersCommentCount} note(s) from others (PIC / Audit / co-lecturer)`}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                      marginLeft: '0.4rem',
+                      padding: '0.2rem 0.55rem', borderRadius: '999px',
+                      fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.04em',
+                      background: 'rgba(215,41,139,0.15)', color: '#D7298B',
+                      border: '1px solid rgba(215,41,139,0.35)',
+                    }}
+                  >
+                    <MessageSquare size={11} />
+                    {subject.othersCommentCount} from others
+                  </span>
+                )}
               </div>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                 {subject.programme} · Sem {subject.semester} · {subject.academicYear}

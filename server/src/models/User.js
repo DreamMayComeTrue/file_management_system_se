@@ -11,6 +11,12 @@ const User = {
     return rows[0] || null
   },
 
+  // Includes passwordHash — used for password verification (change password)
+  async findByIdWithHash(id) {
+    const [rows] = await pool.query('SELECT * FROM USER WHERE id = ?', [id])
+    return rows[0] || null
+  },
+
   async create({ fullName, email, passwordHash, role }) {
     const [result] = await pool.query(
       'INSERT INTO USER (fullName, email, passwordHash, role) VALUES (?, ?, ?, ?)',
@@ -52,6 +58,20 @@ const User = {
 
   async deleteById(id) {
     await pool.query('DELETE FROM USER WHERE id = ? AND role = ?', [id, 'Lecturer'])
+  },
+
+  // List all users of a given role (no passwordHash)
+  async findAllByRole(role) {
+    const [rows] = await pool.query(
+      'SELECT id, fullName, email, role FROM USER WHERE role = ? ORDER BY fullName ASC',
+      [role]
+    )
+    return rows
+  },
+
+  // Delete a user only if they hold the expected role (safety guard)
+  async deleteByIdAndRole(id, role) {
+    await pool.query('DELETE FROM USER WHERE id = ? AND role = ?', [id, role])
   },
 }
 

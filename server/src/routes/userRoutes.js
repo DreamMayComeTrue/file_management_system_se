@@ -10,4 +10,8 @@ router.get('/lecturers',     authorize('PIC', 'Lecturer'),  userCtrl.getLecturer
 router.post('/lecturers',    authorize('PIC'),              userCtrl.createLecturer)
 router.delete('/lecturers/:id', authorize('PIC'),           userCtrl.deleteLecturer)
 
+router.get('/auditors',      authorize('PIC'),              userCtrl.getAuditors)
+router.post('/auditors',     authorize('PIC'),              userCtrl.createAuditor)
+router.delete('/auditors/:id', authorize('PIC'),            userCtrl.deleteAuditor)
+
 module.exports = router

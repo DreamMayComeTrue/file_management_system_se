@@ -32,6 +32,11 @@ const File = {
     return result.insertId
   },
 
+  // Update the displayed file name (used when a new version is uploaded)
+  async updateName(id, originalName) {
+    await pool.query('UPDATE FILE SET originalName = ? WHERE id = ?', [originalName, id])
+  },
+
   // Atomically delete file + all its versions (ON DELETE CASCADE handles it, but explicit is safer)
   async deleteWithVersions(id) {
     await pool.query('DELETE FROM FILE WHERE id = ?', [id])

@@ -28,8 +28,8 @@ const FileVersion = {
   },
 
   // Add a new version, set it as current, mark all others non-current
-  // fileSize is optional (from multer/cloudinary)
-  async addVersion({ fileId, url, cloudinaryPublicId, fileSize, uploadedBy }) {
+  // fileSize / originalName are optional (from multer/cloudinary)
+  async addVersion({ fileId, originalName, url, cloudinaryPublicId, fileSize, uploadedBy }) {
     const conn = await pool.getConnection()
     try {
       await conn.beginTransaction()
@@ -37,9 +37,10 @@ const FileVersion = {
       await conn.query('UPDATE FILEVERSION SET isCurrent = 0 WHERE fileId = ?', [fileId])
       const [result] = await conn.query(
         `INSERT INTO FILEVERSION
-           (fileId, url, cloudinaryPublicId, fileSize, versionNumber, isCurrent, uploadedBy)
-         VALUES (?, ?, ?, ?, ?, 1, ?)`,
-        [fileId, url, cloudinaryPublicId || null, fileSize || null, versionNumber, uploadedBy]
+           (fileId, originalName, url, cloudinaryPublicId, fileSize, versionNumber, isCurrent, uploadedBy)
+         VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
+        [fileId, originalName || null, url, cloudinaryPublicId || null,
+         fileSize || null, versionNumber, uploadedBy]
       )
       await conn.commit()
       return result.insertId
@@ -51,17 +52,20 @@ const FileVersion = {
     }
   },
 
-  // Restore: creates a new version (copy of old) and marks it current
+  // Restore: creates a new version (copy of old) and marks it current.
+  // Returns the copied version's data so the caller can sync FILE.originalName.
   async restore(versionId, uploadedBy) {
     const version = await this.findById(versionId)
     if (!version) throw Object.assign(new Error('Version not found'), { status: 404 })
-    return this.addVersion({
+    await this.addVersion({
       fileId:             version.fileId,
+      originalName:       version.originalName,
       url:                version.url,
       cloudinaryPublicId: version.cloudinaryPublicId,
       fileSize:           version.fileSize,
       uploadedBy,
     })
+    return version
   },
 }
 

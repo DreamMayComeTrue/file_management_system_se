@@ -81,7 +81,7 @@ export default function SubjectsAndSections() {
               <div>
                 <div className="card-title">
                   <BookOpen size={16} />
-                  {subject.code} — {subject.name}
+                  {subject.code} : {subject.name}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
                   Semester {subject.semester} · {subject.academicYear}
@@ -102,7 +102,7 @@ export default function SubjectsAndSections() {
                   onClick={() => setDeleteTarget({
                     type:  'subject',
                     id:    subject.id,
-                    label: `subject "${subject.code} — ${subject.name}" and all its sections`,
+                    label: `subject "${subject.code} : ${subject.name}" and all its sections`,
                   })}
                 >
                   <Trash2 size={15} />

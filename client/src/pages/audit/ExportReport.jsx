@@ -1,44 +1,47 @@
-// UC-15 — Export Progress Report
+// UC-15 — Export Progress Report (formatted .xlsx)
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { FileText, Download, Filter, AlertTriangle, CheckCircle } from 'lucide-react'
+import { FileText, Download, Filter, AlertTriangle } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { dashboardService } from '../../services/dashboardService.js'
 import api from '../../services/api.js'
 import Spinner from '../../components/common/Spinner.jsx'
 
 export default function ExportReport() {
-  const [format, setFormat]       = useState('csv')
   const [subjectId, setSubjectId] = useState('')
-  const [from, setFrom]           = useState('')
-  const [to, setTo]               = useState('')
   const [exporting, setExporting] = useState(false)
 
-  /* Load subjects list for filter */
+  /* Load subjects list for the filter */
   const { data: subjects = [] } = useQuery({
     queryKey: ['allSubjectsBasic'],
-    queryFn:  () =>
-      api.get('/subjects').then(r => r.data),
+    queryFn:  () => api.get('/subjects').then(r => r.data),
   })
 
   async function handleExport() {
     setExporting(true)
     try {
-      const params = { format }
+      const params = {}
       if (subjectId) params.subjectId = subjectId
-      if (from)      params.from      = from
-      if (to)        params.to        = to
 
       const res = await dashboardService.exportReport(params)
 
-      const ext       = format === 'csv' ? 'csv' : 'json'
-      const mimeType  = format === 'csv' ? 'text/csv' : 'application/json'
-      const blob      = new Blob([res.data], { type: mimeType })
-      const url       = URL.createObjectURL(blob)
-      const a         = document.createElement('a')
-      a.href          = url
-      a.download      = `fms-report-${new Date().toISOString().split('T')[0]}.${ext}`
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      // Style 2 (specific subject) -> "<code> Section Report.xlsx"
+      // Style 1 (all subjects)     -> "Completion Report <date>.xlsx"
+      const subj = subjects.find(s => String(s.id) === String(subjectId))
+      const fileName = subj
+        ? `${String(subj.code).replace(/[^A-Za-z0-9 _-]/g, '').trim()} Section Report.xlsx`
+        : `Completion Report ${new Date().toISOString().split('T')[0]}.xlsx`
+
+      const url = URL.createObjectURL(blob)
+      const a   = document.createElement('a')
+      a.href     = url
+      a.download = fileName
+      document.body.appendChild(a)
       a.click()
+      a.remove()
       URL.revokeObjectURL(url)
 
       toast.success('Report downloaded.')
@@ -49,14 +52,15 @@ export default function ExportReport() {
     }
   }
 
+  const selectedSubject = subjects.find(s => String(s.id) === String(subjectId))
+
   return (
-    <div className="page-container" style={{ maxWidth: 680 }}>
+    <div className="page-container" style={{ maxWidth: 'min(96%, 1800px)' }}>
       <div className="page-header">
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <FileText size={22} />
           Export Report
         </h1>
-
       </div>
 
       <div className="card">
@@ -64,7 +68,7 @@ export default function ExportReport() {
           <span className="card-title"><Filter size={15} /> Report Parameters</span>
         </div>
         <div className="card-body">
-          {/* Subject filter */}
+          {/* Subject filter — All subjects = overview style */}
           <div className="form-group">
             <label className="form-label">Subject</label>
             <select
@@ -72,69 +76,14 @@ export default function ExportReport() {
               value={subjectId}
               onChange={e => setSubjectId(e.target.value)}
             >
-              <option value="">All subjects</option>
+              <option value="">All subjects (overview)</option>
               {subjects.map(s => (
-                <option key={s.id} value={s.id}>{s.code} — {s.name}</option>
+                <option key={s.id} value={s.id}>{s.code} : {s.name}</option>
               ))}
             </select>
-            <p className="form-hint">Leave blank to export all subjects.</p>
-          </div>
-
-          {/* Date range */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">From date</label>
-              <input
-                type="date"
-                className="form-input"
-                value={from}
-                onChange={e => setFrom(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">To date</label>
-              <input
-                type="date"
-                className="form-input"
-                value={to}
-                onChange={e => setTo(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Format */}
-          <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-            <label className="form-label">Export Format</label>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              {['csv', 'json'].map(f => (
-                <label
-                  key={f}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    border: `1.5px solid ${format === f ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer',
-                    background: format === f ? 'rgba(139,26,26,0.05)' : 'var(--color-surface)',
-                    fontWeight: format === f ? 600 : 400,
-                    fontSize: '0.875rem',
-                    color: format === f ? 'var(--color-primary)' : 'var(--color-text)',
-                    transition: 'all 0.12s',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="format"
-                    value={f}
-                    checked={format === f}
-                    onChange={() => setFormat(f)}
-                    style={{ display: 'none' }}
-                  />
-                  {format === f && <CheckCircle size={14} />}
-                  {f.toUpperCase()}
-                </label>
-              ))}
-            </div>
+            <p className="form-hint">
+              Leave as <strong>All subjects</strong> to export the full programme overview.
+            </p>
           </div>
 
           <button
@@ -144,7 +93,7 @@ export default function ExportReport() {
           >
             {exporting
               ? <><Spinner size="sm" /> Generating…</>
-              : <><Download size={15} /> Export Report</>}
+              : <><Download size={15} /> Export Report (.xlsx)</>}
           </button>
         </div>
       </div>
@@ -153,8 +102,13 @@ export default function ExportReport() {
       <div className="alert alert-info" style={{ marginTop: '1rem' }}>
         <AlertTriangle size={16} style={{ flexShrink: 0 }} />
         <div>
-          <strong>Report includes:</strong> subject code, section number, subfolder completion status,
-          deadline, overdue flag, and file count per subfolder.
+          <strong>Excel report includes:</strong> one row per section — subject code, subject name,
+          section, lecturer name &amp; email, deadline, a ✓/✗ column for every subfolder
+          (checklist item), and an overall completion status. The auditor name and generation
+          date appear above the table.
+          {selectedSubject && (
+            <> <br /><strong>Current scope:</strong> {selectedSubject.code} : {selectedSubject.name}.</>
+          )}
         </div>
       </div>
     </div>

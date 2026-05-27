@@ -56,7 +56,7 @@ export default function CreateSection() {
   if (loadingSubject) return <Spinner center size="lg" />
 
   return (
-    <div className="page-container" style={{ maxWidth: 600 }}>
+    <div className="page-container" style={{ maxWidth: 'min(96%, 1800px)' }}>
       <div className="breadcrumb">
         <span className="breadcrumb-link" onClick={() => navigate('/subjects-sections')}>Subjects &amp; Sections</span>
         <span className="breadcrumb-sep">/</span>

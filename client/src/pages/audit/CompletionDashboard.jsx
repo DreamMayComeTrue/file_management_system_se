@@ -1,5 +1,6 @@
 // UC-14 — View Progress Dashboard (Audit — read-only)
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { ListChecks, BookOpen, AlertTriangle, ChevronRight } from 'lucide-react'
 import { dashboardService } from '../../services/dashboardService.js'
 import Spinner from '../../components/common/Spinner.jsx'
@@ -16,6 +17,7 @@ function sectionStatus(sec) {
 }
 
 export default function CompletionDashboard() {
+  const navigate = useNavigate()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['programmeDashboard'],
     queryFn:  () => dashboardService.getProgrammeDashboard().then(r => r.data),
@@ -94,7 +96,7 @@ export default function CompletionDashboard() {
             <div className="card-header">
               <div className="card-title">
                 <BookOpen size={16} />
-                {subject.code} — {subject.name}
+                {subject.code} : {subject.name}
               </div>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                 {subject.programme} · Sem {subject.semester} · {subject.academicYear}
@@ -115,13 +117,19 @@ export default function CompletionDashboard() {
                       <th>Deadline</th>
                       <th>Subfolders Done</th>
                       <th>Status</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {subject.sections.map(sec => {
                       const st = sectionStatus(sec)
                       return (
-                        <tr key={sec.id}>
+                        <tr
+                          key={sec.id}
+                          style={{ cursor: 'pointer' }}
+                          title="Open section to review files & add notes"
+                          onClick={() => navigate(`/my-subjects/${subject.id}/sections/${sec.id}`)}
+                        >
                           <td style={{ fontWeight: 600 }}>Section {sec.sectionNumber}</td>
                           <td style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
                             {sec.lecturers?.join(', ') || '—'}
@@ -140,6 +148,7 @@ export default function CompletionDashboard() {
                             </span>
                           </td>
                           <td><StatusBadge status={st} /></td>
+                          <td><ChevronRight size={16} style={{ color: 'var(--color-text-muted)' }} /></td>
                         </tr>
                       )
                     })}

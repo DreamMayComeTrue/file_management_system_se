@@ -43,8 +43,12 @@ CREATE TABLE IF NOT EXISTS SECTION (
   sectionNumber  VARCHAR(10)   NOT NULL,
   subjectId      INT UNSIGNED  NOT NULL,
   deadline       DATETIME      DEFAULT NULL,
+  lecturerId     INT UNSIGNED  DEFAULT NULL,
+  lastReminderSentAt DATETIME  DEFAULT NULL,
   createdAt      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_section_subject FOREIGN KEY (subjectId) REFERENCES SUBJECT(id) ON DELETE CASCADE
+  UNIQUE KEY uq_section_subject_number (subjectId, sectionNumber),
+  CONSTRAINT fk_section_subject  FOREIGN KEY (subjectId)  REFERENCES SUBJECT(id) ON DELETE CASCADE,
+  CONSTRAINT fk_section_lecturer FOREIGN KEY (lecturerId) REFERENCES USER(id)
 );
 
 -- ─────────────────────────────────────────────
@@ -70,6 +74,7 @@ CREATE TABLE IF NOT EXISTS SUBFOLDER (
   completedAt  DATETIME      DEFAULT NULL,
   completedBy  INT UNSIGNED  DEFAULT NULL,
   createdAt    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_subfolder_section_name (sectionId, name),
   CONSTRAINT fk_subfolder_section   FOREIGN KEY (sectionId)   REFERENCES SECTION(id)  ON DELETE CASCADE,
   CONSTRAINT fk_subfolder_completer FOREIGN KEY (completedBy) REFERENCES USER(id)
 );
@@ -98,6 +103,7 @@ CREATE TABLE IF NOT EXISTS FILE (
 CREATE TABLE IF NOT EXISTS FILEVERSION (
   id                  INT UNSIGNED      AUTO_INCREMENT PRIMARY KEY,
   fileId              INT UNSIGNED       NOT NULL,
+  originalName        VARCHAR(255)       DEFAULT NULL,
   url                 TEXT               NOT NULL,
   cloudinaryPublicId  VARCHAR(255)       DEFAULT NULL,
   fileSize            BIGINT UNSIGNED    DEFAULT NULL,
@@ -112,12 +118,15 @@ CREATE TABLE IF NOT EXISTS FILEVERSION (
 -- ─────────────────────────────────────────────
 -- COMMENT
 -- ─────────────────────────────────────────────
+-- Multi-comment per section (was 1:1 prior). One row per posted message;
+-- never updated, only added/deleted, so updatedAt = "posted at".
 CREATE TABLE IF NOT EXISTS COMMENT (
   id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  sectionId INT UNSIGNED NOT NULL UNIQUE,
+  sectionId INT UNSIGNED NOT NULL,
   body      TEXT         NOT NULL,
   authorId  INT UNSIGNED NOT NULL,
-  updatedAt DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updatedAt DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_comment_section (sectionId),
   CONSTRAINT fk_comment_section FOREIGN KEY (sectionId) REFERENCES SECTION(id) ON DELETE CASCADE,
   CONSTRAINT fk_comment_author  FOREIGN KEY (authorId)  REFERENCES USER(id)
 );
@@ -163,9 +172,32 @@ INSERT IGNORE INTO USER (fullName, email, passwordHash, role) VALUES
 ('Test Lecturer',         'lecturer@utm.my', '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'Lecturer'),
 ('Audit Officer',         'audit@utm.my',    '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'Audit');
 
---UPDATE USER SET passwordHash = '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K'
---WHERE email IN ('pic@utm.my', 'lecturer@utm.my', 'audit@utm.my');
+UPDATE USER SET passwordHash = '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K'
+WHERE email IN ('pic@utm.my', 'lecturer@utm.my', 'audit@utm.my');
 
---ALTER TABLE SECTION
---ADD COLUMN lecturerId INT UNSIGNED DEFAULT NULL,
---ADD CONSTRAINT fk_section_lecturer FOREIGN KEY (lecturerId) REFERENCES USER(id);
+
+SELECT 'railway' AS db, COUNT(*) FROM railway.USER
+UNION ALL
+SELECT 'railway_se_file_mgmt', COUNT(*) FROM railway_se_file_management.USER;
+
+SELECT id, email, role, LEFT(passwordHash, 20) AS hash_prefix FROM USER;
+
+ALTER TABLE SECTION ADD UNIQUE KEY uq_section_subject_number (subjectId, sectionNumber);
+ALTER TABLE SUBFOLDER ADD UNIQUE KEY uq_subfolder_section_name (sectionId, name);
+
+SHOW INDEX FROM SECTION;
+SHOW INDEX FROM SUBFOLDER;
+
+DESCRIBE SECTION;
+SHOW INDEX FROM SECTION;
+
+-- ─────────────────────────────────────────────
+-- MIGRATION (for DBs that ran the old schema)
+-- Run this ONCE on Railway if your SECTION table is missing lecturerId:
+-- ─────────────────────────────────────────────
+-- ALTER TABLE SECTION
+--   ADD COLUMN lecturerId INT UNSIGNED DEFAULT NULL AFTER deadline,
+--   ADD CONSTRAINT fk_section_lecturer FOREIGN KEY (lecturerId) REFERENCES USER(id),
+--   ADD UNIQUE KEY uq_section_subject_number (subjectId, sectionNumber);
+-- ALTER TABLE SUBFOLDER
+--   ADD UNIQUE KEY uq_subfolder_section_name (sectionId, name);

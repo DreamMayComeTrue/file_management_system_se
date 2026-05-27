@@ -15,7 +15,7 @@ const AuditLog = {
         al.fileId, al.subfolderId, al.sectionId,
         u.fullName          AS performedByName,
         sf.name             AS subfolderName,
-        sec.sectionNumber   AS sectionName,
+        CONCAT(sub.code, ' - Section ', sec.sectionNumber) AS sectionLabel,
         sub.code            AS subjectCode,
         sub.name            AS subjectName
       FROM AUDIT_LOG al

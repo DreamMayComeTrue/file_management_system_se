@@ -19,8 +19,15 @@ router.put('/:id/deadline',    authorize('PIC'),                      ctrl.setDe
 // POST /api/sections/:id/subfolders  — PIC adds a subfolder to a section
 router.post('/:id/subfolders', authorize('PIC'),                      ctrl.addSubfolder)
 
-// GET/PUT /api/sections/:sectionId/comment  — PIC/Lecturer adds notes to a section
-router.get('/:sectionId/comment', authorize('Lecturer', 'PIC', 'Audit'), dashCtrl.getComment)
-router.put('/:sectionId/comment', authorize('Lecturer', 'PIC'),          dashCtrl.updateComment)
+// Section comments — multi-comment, any of PIC / Lecturer / Audit can post.
+// GET  /api/sections/:sectionId/comments
+router.get('/:sectionId/comments',
+  authorize('Lecturer', 'PIC', 'Audit'), dashCtrl.getComments)
+// POST /api/sections/:sectionId/comments
+router.post('/:sectionId/comments',
+  authorize('Lecturer', 'PIC', 'Audit'), dashCtrl.addComment)
+// DELETE /api/sections/:sectionId/comments/:commentId  (author-only)
+router.delete('/:sectionId/comments/:commentId',
+  authorize('Lecturer', 'PIC', 'Audit'), dashCtrl.deleteComment)
 
 module.exports = router

@@ -43,7 +43,8 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 
 // UC-03 Change Password (authenticated)
 exports.changePassword = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id)
+  const user = await User.findByIdWithHash(req.user.id)
+  if (!user) return res.status(404).json({ message: 'User not found' })
   if (!(await bcrypt.compare(req.body.currentPassword, user.passwordHash))) {
     return res.status(401).json({ message: 'Current password is incorrect' })
   }

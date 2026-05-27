@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   FolderKanban, Plus, Trash2, Calendar, ChevronDown, ChevronRight,
-  AlertTriangle, CheckSquare, File, Download, Clock
+  AlertTriangle, CheckSquare, File, Download, Clock, Eye
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { subjectService } from '../../services/subjectService.js'
@@ -13,6 +13,7 @@ import StatusBadge from '../../components/common/StatusBadge.jsx'
 import Modal from '../../components/common/Modal.jsx'
 import ConfirmDialog from '../../components/common/ConfirmDialog.jsx'
 import EmptyState from '../../components/common/EmptyState.jsx'
+import SectionComment from '../../components/common/SectionComment.jsx'
 
 function fmt(bytes) {
   if (!bytes) return '—'
@@ -23,6 +24,44 @@ function fmt(bytes) {
 function fmtDate(d) {
   if (!d) return '—'
   return new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+/* Download a file with its real name (Cloudinary URLs ignore the <a download> attr cross-origin) */
+async function downloadFile(url, fileName) {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('fetch failed')
+    const blob = await res.blob()
+    const objUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objUrl
+    a.download = fileName || 'download'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objUrl)
+  } catch {
+    window.open(url, '_blank')   // fallback: open in a new tab
+  }
+}
+/* Open a file preview in a new tab — forces the correct MIME so PDFs/images render inline */
+async function previewFile(url, fileName) {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('fetch failed')
+    const blob = await res.blob()
+    const ext  = (fileName || '').split('.').pop().toLowerCase()
+    const mimeByExt = {
+      pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg',
+      jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', txt: 'text/plain',
+    }
+    const mime   = mimeByExt[ext] || blob.type || 'application/octet-stream'
+    const objUrl = URL.createObjectURL(new Blob([blob], { type: mime }))
+    const win    = window.open(objUrl, '_blank')
+    setTimeout(() => URL.revokeObjectURL(objUrl), 60000)
+    if (!win) URL.revokeObjectURL(objUrl)
+  } catch {
+    window.open(url, '_blank')
+  }
 }
 
 function SubfolderRow({ sf, onRemove, onRefresh }) {
@@ -53,7 +92,7 @@ function SubfolderRow({ sf, onRemove, onRefresh }) {
       </div>
       {open && (
         <div className="subfolder-body">
-          {sf.isCompleted && sf.completedByName && (
+          {!!sf.isCompleted && sf.completedByName && (
             <div style={{ fontSize: '0.8rem', color: 'var(--color-complete)', marginBottom: '0.625rem' }}>
               <CheckSquare size={13} style={{ verticalAlign: 'middle', marginRight: '0.3rem' }} />
               Completed by {sf.completedByName} · {fmtDate(sf.completedAt)}
@@ -69,9 +108,22 @@ function SubfolderRow({ sf, onRemove, onRefresh }) {
                 <span className="file-meta">{fmt(f.fileSize)}</span>
                 <span className="file-meta">{fmtDate(f.uploadedAt)}</span>
                 <div className="file-actions">
-                  <a href={f.fileUrl} target="_blank" rel="noreferrer" className="btn btn-icon" title="Download">
+                  <button
+                    type="button"
+                    className="btn btn-icon"
+                    title="Preview"
+                    onClick={() => previewFile(f.fileUrl, f.fileName)}
+                  >
+                    <Eye size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-icon"
+                    title="Download"
+                    onClick={() => downloadFile(f.fileUrl, f.fileName)}
+                  >
                     <Download size={13} />
-                  </a>
+                  </button>
                 </div>
               </div>
             ))
@@ -142,7 +194,7 @@ export default function SectionDetail() {
 
       <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
         <div>
-          <h1 className="page-title">{subject.code} — Section {section.sectionNumber}</h1>
+          <h1 className="page-title">{subject.code} : Section {section.sectionNumber}</h1>
 
         </div>
         <div className="card-actions">
@@ -194,6 +246,9 @@ export default function SectionDetail() {
           </div>
         </div>
       )}
+
+      {/* Section Notes (comment) */}
+      <SectionComment sectionId={sectionId} />
 
       {/* Subfolder list */}
       {subfolders.length === 0 ? (

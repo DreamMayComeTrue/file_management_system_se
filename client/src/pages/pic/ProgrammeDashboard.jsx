@@ -88,7 +88,7 @@ export default function ProgrammeDashboard() {
             <div className="card-header">
               <div className="card-title">
                 <BookOpen size={16} />
-                {subject.code} — {subject.name}
+                {subject.code} : {subject.name}
               </div>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                 Sem {subject.semester} · {subject.academicYear}

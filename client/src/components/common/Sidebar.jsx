@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, BookOpen, FolderKanban,
   Settings, LogOut, BarChart2, FileText,
-  ListChecks, FolderTree, Clock
+  ListChecks, FolderTree, Clock, ShieldCheck
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import logo from '../../assets/logo.png'
@@ -34,6 +34,7 @@ const NAV = {
         { label: 'Subjects & Sections', to: '/subjects-sections',   icon: FolderKanban },
         { label: 'Subfolder Template',  to: '/subfolder-template',  icon: FolderTree },
         { label: 'Manage Lecturers',    to: '/manage-lecturers',    icon: Settings },
+        { label: 'Manage Auditors',     to: '/manage-auditors',     icon: ShieldCheck },
         { label: 'Audit Log',           to: '/audit-log',           icon: Clock },
       ],
     },

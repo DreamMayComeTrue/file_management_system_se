@@ -2,15 +2,42 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Lock, Eye, EyeOff, AlertCircle, Mail, Send, CheckCircle2 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { authService } from '../../services/authService.js'
+import api from '../../services/api.js'
 import Spinner from '../../components/common/Spinner.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 export default function ChangePassword() {
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [testTo, setTestTo]       = useState('')
+  const [testing, setTesting]     = useState(false)
+  const [testResult, setTestResult] = useState(null)   // { ok, message }
+
+  async function handleSendTestEmail() {
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const url = testTo.trim()
+        ? `/dev/test-email?to=${encodeURIComponent(testTo.trim())}`
+        : '/dev/test-email'
+      const res = await api.post(url)
+      setTestResult({ ok: true, message: res.data.message ?? 'Test email sent.' })
+      toast.success('Test email sent.')
+    } catch (err) {
+      const data = err.response?.data ?? {}
+      setTestResult({
+        ok: false,
+        message: data.message ?? 'Failed to send test email.',
+        hint: data.hint,
+      })
+      toast.error(data.message ?? 'Failed to send test email.')
+    } finally {
+      setTesting(false)
+    }
+  }
   const [showCurrent, setShowCurrent]   = useState(false)
   const [showNew, setShowNew]           = useState(false)
   const [showConfirm, setShowConfirm]   = useState(false)
@@ -135,6 +162,64 @@ export default function ChangePassword() {
           </form>
         </div>
       </div>
+
+      {/* SMTP test panel — PIC only */}
+      {user?.role === 'PIC' && (
+        <div className="card" style={{ marginTop: '1.5rem' }}>
+          <div className="card-header">
+            <span className="card-title"><Mail size={15} /> Email System Test (SMTP)</span>
+          </div>
+          <div className="card-body">
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: 0 }}>
+              Send a test email to verify SMTP credentials in <code>server/.env</code> are working.
+              Leave the field blank to send it to your own account email.
+            </p>
+            <div className="form-group">
+              <label className="form-label">Recipient (optional)</label>
+              <div className="input-wrap">
+                <span className="input-icon"><Mail size={15} /></span>
+                <input
+                  type="email"
+                  className="form-input has-icon"
+                  placeholder={user?.email ?? 'you@utm.my'}
+                  value={testTo}
+                  onChange={(e) => setTestTo(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={testing}
+              onClick={handleSendTestEmail}
+            >
+              {testing
+                ? <><Spinner size="sm" /> Sending…</>
+                : <><Send size={14} /> Send Test Email</>}
+            </button>
+
+            {testResult && (
+              <div
+                className={`alert ${testResult.ok ? 'alert-success' : 'alert-error'}`}
+                style={{ marginTop: '1rem' }}
+              >
+                {testResult.ok
+                  ? <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+                  : <AlertCircle  size={16} style={{ flexShrink: 0 }} />}
+                <div>
+                  <div>{testResult.message}</div>
+                  {testResult.hint && (
+                    <div style={{ fontSize: '0.75rem', marginTop: '0.4rem', opacity: 0.85 }}>
+                      💡 {testResult.hint}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   )

@@ -20,9 +20,12 @@ function fmtDate(d) {
   })
 }
 
+const PER_PAGE = 10
+
 export default function AuditLog() {
   const [filters, setFilters] = useState({ action: '', from: '', to: '' })
   const [applied, setApplied] = useState({})
+  const [page, setPage]       = useState(1)
 
   const { data = [], isLoading, isError } = useQuery({
     queryKey: ['auditLog', applied],
@@ -31,11 +34,17 @@ export default function AuditLog() {
 
   function applyFilters() {
     setApplied({ ...filters })
+    setPage(1)
   }
   function clearFilters() {
     setFilters({ action: '', from: '', to: '' })
     setApplied({})
+    setPage(1)
   }
+
+  const totalPages = Math.max(1, Math.ceil(data.length / PER_PAGE))
+  const safePage   = Math.min(page, totalPages)
+  const pageRows   = data.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE)
 
   return (
     <div className="page-container">
@@ -52,8 +61,8 @@ export default function AuditLog() {
         <div className="card-header">
           <span className="card-title"><Filter size={15} /> Filters</span>
         </div>
-        <div className="card-body" style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div className="form-group" style={{ margin: 0, minWidth: 160 }}>
+        <div className="card-body" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div className="form-group" style={{ margin: 0, flex: '1 1 200px' }}>
             <label className="form-label">Action</label>
             <select
               className="form-input"
@@ -66,7 +75,7 @@ export default function AuditLog() {
               <option value="RESTORE">Restore</option>
             </select>
           </div>
-          <div className="form-group" style={{ margin: 0, minWidth: 160 }}>
+          <div className="form-group" style={{ margin: 0, flex: '1 1 200px' }}>
             <label className="form-label">From</label>
             <input
               type="date"
@@ -75,7 +84,7 @@ export default function AuditLog() {
               onChange={e => setFilters(f => ({ ...f, from: e.target.value }))}
             />
           </div>
-          <div className="form-group" style={{ margin: 0, minWidth: 160 }}>
+          <div className="form-group" style={{ margin: 0, flex: '1 1 200px' }}>
             <label className="form-label">To</label>
             <input
               type="date"
@@ -84,9 +93,9 @@ export default function AuditLog() {
               onChange={e => setFilters(f => ({ ...f, to: e.target.value }))}
             />
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-primary btn-sm" onClick={applyFilters}>Apply</button>
-            <button className="btn btn-secondary btn-sm" onClick={clearFilters}>Clear</button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+            <button className="btn btn-primary" onClick={applyFilters}>Apply</button>
+            <button className="btn btn-secondary" onClick={clearFilters}>Clear</button>
           </div>
         </div>
       </div>
@@ -105,6 +114,7 @@ export default function AuditLog() {
           />
         </div>
       ) : (
+        <>
         <div className="table-wrap">
           <table>
             <thead>
@@ -118,7 +128,7 @@ export default function AuditLog() {
               </tr>
             </thead>
             <tbody>
-              {data.map((row, i) => {
+              {pageRows.map((row, i) => {
                 const ac = ACTION_ICONS[row.action] ?? {}
                 const Icon = ac.icon
                 return (
@@ -150,6 +160,38 @@ export default function AuditLog() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {data.length > PER_PAGE && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginTop: '1rem', flexWrap: 'wrap', gap: '0.75rem',
+          }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+              Showing {(safePage - 1) * PER_PAGE + 1}–{Math.min(safePage * PER_PAGE, data.length)} of {data.length}
+            </span>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={safePage <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
+                Previous
+              </button>
+              <span style={{ fontSize: '0.85rem', minWidth: 90, textAlign: 'center' }}>
+                Page {safePage} of {totalPages}
+              </span>
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={safePage >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+        </>
       )}
     </div>
   )

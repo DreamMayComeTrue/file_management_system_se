@@ -8,7 +8,13 @@ import { subjectService } from '../../services/subjectService.js'
 import Spinner from '../../components/common/Spinner.jsx'
 
 const SEMESTERS = [1, 2]
-const YEARS     = Array.from({ length: 6 }, (_, i) => `${2023 + i}/${2024 + i}`)
+// Suggested years auto-generated around the current year (current-2 .. current+5)
+// — the PIC can also type any custom year in the field.
+const NOW_YEAR  = new Date().getFullYear()
+const YEARS     = Array.from({ length: 8 }, (_, i) => {
+  const y = NOW_YEAR - 2 + i
+  return `${y}/${y + 1}`
+})
 
 export default function CreateSubject() {
   const navigate = useNavigate()
@@ -34,7 +40,7 @@ export default function CreateSubject() {
   }
 
   return (
-    <div className="page-container" style={{ maxWidth: 600 }}>
+    <div className="page-container" style={{ maxWidth: 'min(96%, 1800px)' }}>
       <div className="breadcrumb">
         <span className="breadcrumb-link" onClick={() => navigate('/subjects-sections')}>Subjects &amp; Sections</span>
         <span className="breadcrumb-sep">/</span>
@@ -95,13 +101,28 @@ export default function CreateSubject() {
 
               <div className="form-group">
                 <label className="form-label form-label-required">Academic Year</label>
-                <select
+                <input
+                  type="text"
+                  list="academicYearOptions"
                   className={`form-input${errors.academicYear ? ' error' : ''}`}
-                  {...register('academicYear', { required: 'Academic year is required' })}
-                >
-                  <option value="">— Select —</option>
-                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
+                  placeholder="Select or type, e.g. 2025/2026"
+                  {...register('academicYear', {
+                    required: 'Academic year is required',
+                    pattern: {
+                      value: /^\d{4}\/\d{4}$/,
+                      message: 'Format: YYYY/YYYY (e.g. 2025/2026)',
+                    },
+                    validate: (v) => {
+                      const m = /^(\d{4})\/(\d{4})$/.exec(v || '')
+                      if (!m) return true   // format handled by pattern
+                      return Number(m[2]) === Number(m[1]) + 1
+                        || 'The two years must be consecutive (e.g. 2025/2026)'
+                    },
+                  })}
+                />
+                <datalist id="academicYearOptions">
+                  {YEARS.map(y => <option key={y} value={y} />)}
+                </datalist>
                 {errors.academicYear && <span className="form-error"><AlertCircle size={12} />{errors.academicYear.message}</span>}
               </div>
             </div>

@@ -18,17 +18,26 @@ exports.getProgrammeDashboard = asyncHandler(async (req, res) => {
   res.json({ subjects })
 })
 
-// Section comment — PIC/Lecturer writes notes per section
-// GET /api/dashboard/sections/:sectionId/comment
-exports.getComment = asyncHandler(async (req, res) => {
-  const comment = await Comment.findBySection(req.params.sectionId)
-  res.json(comment || { body: '' })
+// List all comments on a section
+// GET /api/sections/:sectionId/comments
+exports.getComments = asyncHandler(async (req, res) => {
+  const list = await Comment.findBySection(req.params.sectionId)
+  res.json(list)
 })
 
-// PUT /api/sections/:sectionId/comment  (also reachable via /api/dashboard/sections/:sectionId/comment)
-exports.updateComment = asyncHandler(async (req, res) => {
-  // client sends { text } — also accept legacy { body }
-  const content = req.body.text ?? req.body.body ?? ''
-  await Comment.upsert(req.params.sectionId, content, req.user.id)
-  res.json({ message: 'Comment saved' })
+// Post a new comment (PIC, Lecturer & Audit all welcome)
+// POST /api/sections/:sectionId/comments  body: { text }
+exports.addComment = asyncHandler(async (req, res) => {
+  const content = (req.body.text ?? req.body.body ?? '').trim()
+  if (!content) return res.status(400).json({ message: 'Comment text is required.' })
+  const id = await Comment.add(req.params.sectionId, content, req.user.id)
+  res.status(201).json({ id })
+})
+
+// Delete one of YOUR OWN comments
+// DELETE /api/sections/:sectionId/comments/:commentId
+exports.deleteComment = asyncHandler(async (req, res) => {
+  const affected = await Comment.deleteByIdAndAuthor(req.params.commentId, req.user.id)
+  if (!affected) return res.status(403).json({ message: 'You can only delete your own comments.' })
+  res.json({ message: 'Comment deleted.' })
 })

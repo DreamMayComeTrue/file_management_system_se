@@ -55,7 +55,7 @@ export default function SetDeadline() {
   const todayStr   = new Date().toISOString().split('T')[0]
 
   return (
-    <div className="page-container" style={{ maxWidth: 560 }}>
+    <div className="page-container" style={{ maxWidth: 'min(96%, 1800px)' }}>
       <div className="breadcrumb">
         <span className="breadcrumb-link" onClick={() => navigate('/subjects-sections')}>Subjects &amp; Sections</span>
         <span className="breadcrumb-sep">/</span>

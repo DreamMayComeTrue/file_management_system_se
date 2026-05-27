@@ -16,10 +16,6 @@ router.get('/programme', authorize('PIC', 'Audit'),       dashCtrl.getProgrammeD
 // GET /api/dashboard/export    — Audit: download CSV report
 router.get('/export',    authorize('PIC', 'Audit'),       auditCtrl.exportReport)
 
-// Section comment
-// GET /api/dashboard/sections/:sectionId/comment
-// PUT /api/dashboard/sections/:sectionId/comment
-router.get('/sections/:sectionId/comment', authorize('Lecturer', 'PIC', 'Audit'), dashCtrl.getComment)
-router.put('/sections/:sectionId/comment', authorize('Lecturer', 'PIC'),          dashCtrl.updateComment)
+// (Section comments are mounted under /api/sections/:sectionId/comments — see sectionRoutes)
 
 module.exports = router
