@@ -37,6 +37,14 @@ const thinBorder = {
 }
 const FIXED = ['Subject Code', 'Subject Name', 'Section', 'Lecturer Name', 'Lecturer Email', 'Deadline']
 
+// Hyperlinks inside the Excel report point at our backend proxy:
+//   GET /api/public/files/:fileId/download
+// The proxy streams the Cloudinary file with a proper Content-Disposition
+// header so the browser saves it with the real filename + extension.
+function downloadProxyUrl(apiBase, fileId) {
+  return `${apiBase}/api/public/files/${fileId}/download`
+}
+
 function colLetter(n) {
   let s = ''
   while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26 }
@@ -274,7 +282,7 @@ exports.exportReport = asyncHandler(async (req, res) => {
   let files = []
   if (subfolders.length) {
     const [fr] = await pool.query(
-      `SELECT f.subfolderId, f.originalName, fv.url, fv.uploadedAt
+      `SELECT f.id AS fileId, f.subfolderId, f.originalName, fv.url, fv.uploadedAt
        FROM FILE f
        JOIN FILEVERSION fv ON fv.fileId = f.id AND fv.isCurrent = 1
        WHERE f.subfolderId IN (?)
@@ -303,6 +311,8 @@ exports.exportReport = asyncHandler(async (req, res) => {
 
   const auditor = req.user.fullName || '—'
   const scope   = subjectId && sections[0] ? `${sections[0].subjectCode} only` : 'All subjects'
+  // Build absolute base URL for file-download hyperlinks (Excel needs absolute URLs)
+  const apiBase = `${req.protocol}://${req.get('host')}`
 
   // ── Build workbook ─────────────────────────────────────────
   const wb = new ExcelJS.Workbook()
@@ -392,7 +402,7 @@ exports.exportReport = asyncHandler(async (req, res) => {
       const extra  = entry.files.length > 1 ? `  (+${entry.files.length - 1} more)` : ''
       return {
         value:     latest.originalName + extra,
-        hyperlink: latest.url,
+        hyperlink: downloadProxyUrl(apiBase, latest.fileId),
         color:     CLR.link,
       }
     },

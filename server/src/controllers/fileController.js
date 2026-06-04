@@ -1,3 +1,4 @@
+const https         = require('https')
 const File          = require('../models/File')
 const FileVersion   = require('../models/FileVersion')
 const Section       = require('../models/Section')
@@ -142,6 +143,40 @@ exports.deleteFile = asyncHandler(async (req, res) => {
     await Subfolder.markIncomplete(file.subfolderId)
   }
   res.json({ message: 'File deleted' })
+})
+
+// Public proxy: stream a file from Cloudinary with the right filename so it
+// downloads as e.g. "Phase 0.pdf" instead of the random Cloudinary public_id.
+// Used by the Excel report hyperlinks (Cloudinary's fl_attachment doesn't
+// reliably accept filenames containing dots, especially for raw resources).
+// GET /api/public/files/:fileId/download
+exports.downloadFile = asyncHandler(async (req, res) => {
+  const file = await File.findById(req.params.fileId)
+  if (!file) return res.status(404).send('File not found')
+  const versions = await FileVersion.findByFile(file.id)
+  const current  = versions.find(v => v.isCurrent === 1) || versions[0]
+  if (!current) return res.status(404).send('No file content')
+
+  const rawName = current.originalName || file.originalName || `file_${file.id}`
+  // Strip characters that would break a Content-Disposition filename header.
+  const safeName = rawName.replace(/["\\\r\n]/g, '_')
+
+  const upstream = https.get(current.url, (upRes) => {
+    if (upRes.statusCode !== 200) {
+      if (!res.headersSent) res.status(502).send('Upstream fetch failed')
+      upRes.resume()
+      return
+    }
+    res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`)
+    res.setHeader('Content-Type', upRes.headers['content-type'] || 'application/octet-stream')
+    if (upRes.headers['content-length']) {
+      res.setHeader('Content-Length', upRes.headers['content-length'])
+    }
+    upRes.pipe(res)
+  })
+  upstream.on('error', () => {
+    if (!res.headersSent) res.status(502).send('Failed to reach storage')
+  })
 })
 
 // Lecturer manually marks subfolder as complete

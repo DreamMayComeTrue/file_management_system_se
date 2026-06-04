@@ -11,6 +11,7 @@ const templateRoutes  = require('./routes/subfolderTemplateRoutes')
 const dashboardRoutes = require('./routes/dashboardRoutes')
 const auditRoutes     = require('./routes/auditRoutes')
 const devRoutes       = require('./routes/devRoutes')
+const publicRoutes    = require('./routes/publicRoutes')
 
 const app = express()
 
@@ -27,6 +28,7 @@ app.use('/api/subfolder-template', templateRoutes)
 app.use('/api/dashboard',          dashboardRoutes)
 app.use('/api/audit-log',          auditRoutes)
 app.use('/api/dev',                devRoutes)
+app.use('/api/public',             publicRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err.stack)
