@@ -102,7 +102,7 @@ export default function ExportReport() {
       <div className="alert alert-info" style={{ marginTop: '1rem' }}>
         <AlertTriangle size={16} style={{ flexShrink: 0 }} />
         <div>
-          <strong>Excel report includes:</strong> one row per section — subject code, subject name,
+          <strong>Excel report includes:</strong> one row per section: subject code, subject name,
           section, lecturer name &amp; email, deadline, a ✓/✗ column for every subfolder
           (checklist item), and an overall completion status. The auditor name and generation
           date appear above the table.
