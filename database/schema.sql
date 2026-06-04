@@ -172,16 +172,6 @@ INSERT IGNORE INTO USER (fullName, email, passwordHash, role) VALUES
 ('Test Lecturer',         'lecturer@utm.my', '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'Lecturer'),
 ('Audit Officer',         'audit@utm.my',    '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K', 'Audit');
 
-UPDATE USER SET passwordHash = '$2a$12$.H06g4i4YoPNHV.S3sVGXeYR5LkYBwhoanYAufCfNowihyuKItF8K'
-WHERE email IN ('pic@utm.my', 'lecturer@utm.my', 'audit@utm.my');
-
-
-SELECT 'railway' AS db, COUNT(*) FROM railway.USER
-UNION ALL
-SELECT 'railway_se_file_mgmt', COUNT(*) FROM railway_se_file_management.USER;
-
-SELECT id, email, role, LEFT(passwordHash, 20) AS hash_prefix FROM USER;
-
 ALTER TABLE SECTION ADD UNIQUE KEY uq_section_subject_number (subjectId, sectionNumber);
 ALTER TABLE SUBFOLDER ADD UNIQUE KEY uq_subfolder_section_name (sectionId, name);
 
