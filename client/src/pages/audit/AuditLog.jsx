@@ -131,8 +131,21 @@ export default function AuditLog() {
               {pageRows.map((row, i) => {
                 const ac = ACTION_ICONS[row.action] ?? {}
                 const Icon = ac.icon
+                // Detect whether the source records are gone (subject / section
+                // / subfolder deleted). If so, dim the row and italicise the
+                // "(...deleted)" markers so the row reads as historical.
+                const isDeleted =
+                  (typeof row.sectionLabel  === 'string' && row.sectionLabel.startsWith('(')) ||
+                  (typeof row.subfolderName === 'string' && row.subfolderName.startsWith('('))
+
+                const deletedStyle = {
+                  fontStyle: 'italic',
+                  color: 'var(--color-text-subtle, var(--color-text-muted))',
+                }
+                const rowOpacity = isDeleted ? { opacity: 0.55 } : null
+
                 return (
-                  <tr key={i}>
+                  <tr key={i} style={rowOpacity}>
                     <td style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
                       {fmtDate(row.createdAt)}
                     </td>
@@ -145,10 +158,18 @@ export default function AuditLog() {
                     <td style={{ fontSize: '0.875rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {row.fileName ?? '—'}
                     </td>
-                    <td style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                    <td style={{
+                      fontSize: '0.875rem',
+                      color: 'var(--color-text-muted)',
+                      ...(typeof row.subfolderName === 'string' && row.subfolderName.startsWith('(') ? deletedStyle : null),
+                    }}>
                       {row.subfolderName ?? '—'}
                     </td>
-                    <td style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                    <td style={{
+                      fontSize: '0.875rem',
+                      color: 'var(--color-text-muted)',
+                      ...(typeof row.sectionLabel === 'string' && row.sectionLabel.startsWith('(') ? deletedStyle : null),
+                    }}>
                       {row.sectionLabel ?? '—'}
                     </td>
                     <td style={{ fontSize: '0.875rem' }}>

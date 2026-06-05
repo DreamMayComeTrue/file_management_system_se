@@ -14,8 +14,16 @@ const AuditLog = {
         al.id, al.action, al.fileName, al.createdAt,
         al.fileId, al.subfolderId, al.sectionId,
         u.fullName          AS performedByName,
-        sf.name             AS subfolderName,
-        CONCAT(sub.code, ' - Section ', sec.sectionNumber) AS sectionLabel,
+        CASE
+          WHEN al.subfolderId IS NULL THEN NULL
+          WHEN sf.id IS NULL          THEN '(Subfolder deleted)'
+          ELSE sf.name
+        END AS subfolderName,
+        CASE
+          WHEN al.sectionId IS NULL THEN NULL
+          WHEN sec.id IS NULL       THEN '(Subject deleted)'
+          ELSE CONCAT(sub.code, ' - Section ', sec.sectionNumber)
+        END AS sectionLabel,
         sub.code            AS subjectCode,
         sub.name            AS subjectName
       FROM AUDIT_LOG al

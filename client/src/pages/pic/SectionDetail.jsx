@@ -4,10 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   FolderKanban, Plus, Trash2, Calendar, ChevronDown, ChevronRight,
-  AlertTriangle, CheckSquare, File, Download, Clock, Eye
+  AlertTriangle, CheckSquare, XCircle, File, Download, Clock, Eye
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { subjectService } from '../../services/subjectService.js'
+import { fileService } from '../../services/fileService.js'
+import { dashboardService } from '../../services/dashboardService.js'
 import Spinner from '../../components/common/Spinner.jsx'
 import StatusBadge from '../../components/common/StatusBadge.jsx'
 import Modal from '../../components/common/Modal.jsx'
@@ -64,7 +66,7 @@ async function previewFile(url, fileName) {
   }
 }
 
-function SubfolderRow({ sf, onRemove, onRefresh }) {
+function SubfolderRow({ sf, onRemove, onReject, onRefresh }) {
   const [open, setOpen] = useState(false)
   return (
     <div className={`subfolder-item${sf.isCompleted ? ' is-complete' : ''}`}>
@@ -78,6 +80,21 @@ function SubfolderRow({ sf, onRemove, onRefresh }) {
             {sf.files?.length ?? 0} file{sf.files?.length !== 1 ? 's' : ''}
           </span>
           <StatusBadge status={sf.isCompleted ? 'complete' : 'incomplete'} />
+          {!!sf.isCompleted && (
+            <button
+              className="btn btn-sm"
+              title="Reject completion: revert subfolder to incomplete with a reason"
+              onClick={(e) => { e.stopPropagation(); onReject(sf) }}
+              style={{
+                color: 'var(--color-incomplete)',
+                border: '1px solid var(--color-incomplete)',
+                background: 'transparent',
+                display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+              }}
+            >
+              <XCircle size={13} /> Reject
+            </button>
+          )}
           {!sf.files?.length && (
             <button
               className="btn btn-icon btn-sm"
@@ -142,6 +159,8 @@ export default function SectionDetail() {
   const [addModal, setAddModal]   = useState(false)
   const [newName, setNewName]     = useState('')
   const [removeTarget, setRemoveTarget] = useState(null)
+  const [rejectTarget, setRejectTarget] = useState(null)
+  const [rejectReason, setRejectReason] = useState('')
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['sectionDetail', subjectId, sectionId],
@@ -166,7 +185,31 @@ export default function SectionDetail() {
       setRemoveTarget(null)
       refetch()
     },
-    onError: (err) => toast.error(err.response?.data?.message ?? 'Cannot remove — subfolder may have files.'),
+    onError: (err) => toast.error(err.response?.data?.message ?? 'Cannot remove, subfolder may have files.'),
+  })
+
+  // Reject a completed subfolder: revert it to incomplete and post a comment
+  // explaining why, so the lecturer can see the reason in Section Notes.
+  const rejectMut = useMutation({
+    mutationFn: async () => {
+      const reason = rejectReason.trim()
+      const name   = rejectTarget?.name ?? 'subfolder'
+      await fileService.markIncomplete(rejectTarget.id)
+      await dashboardService.addComment(
+        sectionId,
+        `[Rejected: "${name}"] ${reason}`
+      )
+    },
+    onSuccess: () => {
+      toast.success(`"${rejectTarget?.name}" rejected. Lecturer can see the reason in Section Notes.`)
+      setRejectTarget(null)
+      setRejectReason('')
+      refetch()
+      qc.invalidateQueries(['sectionComments', sectionId])
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message ?? 'Failed to reject subfolder.')
+    },
   })
 
   if (isLoading) return <Spinner center size="lg" />
@@ -270,6 +313,7 @@ export default function SectionDetail() {
             key={sf.id}
             sf={sf}
             onRemove={setRemoveTarget}
+            onReject={setRejectTarget}
             onRefresh={refetch}
           />
         ))
@@ -318,6 +362,48 @@ export default function SectionDetail() {
         danger
         loading={removeMut.isPending}
       />
+
+      {/* Reject completion modal — PIC reverts a completed subfolder + posts reason */}
+      <Modal
+        open={!!rejectTarget}
+        onClose={() => { setRejectTarget(null); setRejectReason('') }}
+        title={`Reject Completion: ${rejectTarget?.name ?? ''}`}
+        footer={
+          <>
+            <button
+              className="btn btn-secondary"
+              onClick={() => { setRejectTarget(null); setRejectReason('') }}
+              disabled={rejectMut.isPending}
+            >Cancel</button>
+            <button
+              className="btn btn-danger"
+              disabled={!rejectReason.trim() || rejectMut.isPending}
+              onClick={() => rejectMut.mutate()}
+            >
+              {rejectMut.isPending
+                ? <><Spinner size="sm" /> Rejecting…</>
+                : <><XCircle size={14} /> Reject & Post Note</>}
+            </button>
+          </>
+        }
+      >
+        <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: 0 }}>
+          This will revert <strong style={{ color: 'var(--color-text)' }}>"{rejectTarget?.name}"</strong> back to
+          incomplete and post your reason as a Section Note so the lecturer can see it.
+        </p>
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label form-label-required">Reason for rejection</label>
+          <textarea
+            className="form-input"
+            rows={3}
+            placeholder="e.g. Lecture notes missing for week 4; please re-upload before marking complete."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            style={{ resize: 'vertical', minHeight: 80, fontFamily: 'inherit' }}
+            autoFocus
+          />
+        </div>
+      </Modal>
     </div>
   )
 }

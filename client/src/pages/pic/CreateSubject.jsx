@@ -93,7 +93,7 @@ export default function CreateSubject() {
                   className={`form-input${errors.semester ? ' error' : ''}`}
                   {...register('semester', { required: 'Semester is required' })}
                 >
-                  <option value="">— Select —</option>
+                  <option value="">Select…</option>
                   {SEMESTERS.map(s => <option key={s} value={s}>Semester {s}</option>)}
                 </select>
                 {errors.semester && <span className="form-error"><AlertCircle size={12} />{errors.semester.message}</span>}

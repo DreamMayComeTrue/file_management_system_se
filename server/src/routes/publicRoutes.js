@@ -6,6 +6,7 @@ const express  = require('express')
 const router   = express.Router()
 const fileCtrl = require('../controllers/fileController')
 
-router.get('/files/:fileId/download', fileCtrl.downloadFile)
+router.get('/files/:fileId/download',         fileCtrl.downloadFile)
+router.get('/subfolders/:subfolderId/files',  fileCtrl.listSubfolderFiles)
 
 module.exports = router

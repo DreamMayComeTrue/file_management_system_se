@@ -340,7 +340,7 @@ function SubfolderRow({ sf, subjectId, sectionId, onRefresh, canComplete }) {
               <Modal
                 open={!!newVersionTarget}
                 onClose={() => setNewVersionTarget(null)}
-                title={`Upload New Version — ${newVersionTarget.fileName}`}
+                title={`Upload New Version: ${newVersionTarget.fileName}`}
               >
                 <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
                   This will add a new version. The existing file is preserved in version history.

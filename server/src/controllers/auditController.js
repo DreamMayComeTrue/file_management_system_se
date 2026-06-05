@@ -45,6 +45,13 @@ function downloadProxyUrl(apiBase, fileId) {
   return `${apiBase}/api/public/files/${fileId}/download`
 }
 
+// Excel cells can only carry ONE hyperlink. When a subfolder has multiple
+// files, clicking the cell opens this tiny HTML page that lists every file
+// with an individual download button.
+function subfolderListUrl(apiBase, subfolderId) {
+  return `${apiBase}/api/public/subfolders/${subfolderId}/files`
+}
+
 function colLetter(n) {
   let s = ''
   while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26 }
@@ -132,7 +139,18 @@ function buildSheet(wb, { name, title, legend, trailingCols, sections, checklist
       const v = tc.valueFor(sec)                        // single col
       return v === undefined || v === null ? [] : [v]
     })
-    const maxRows = Math.max(1, ...colData.map(a => a.length))
+    // Resolve each checklist cell once — cellFor may return a single descriptor
+    // OR an array (for the "Uploaded Files" sheet, one entry per file in the
+    // subfolder so each file gets its own clickable row).
+    const checklistData = checklist.map(name => {
+      const r = cellFor(sec, name)
+      return Array.isArray(r) ? r : (r === undefined || r === null ? [] : [r])
+    })
+    const maxRows = Math.max(
+      1,
+      ...colData.map(a => a.length),
+      ...checklistData.map(a => a.length),
+    )
     const bandThisSection = (secIdx % 2 === 1)   // alternate per-section band
 
     for (let ri = 0; ri < maxRows; ri++) {
@@ -157,11 +175,13 @@ function buildSheet(wb, { name, title, legend, trailingCols, sections, checklist
         c.border = thinBorder
       })
 
-      // Checklist cells — only on first row
+      // Checklist cells — each cell can render multiple values across rows
+      // (Sheet 2 uses this to show one file per row when a subfolder has many).
       checklist.forEach((nameKey, i) => {
         const c = row.getCell(FIXED.length + 1 + i)
-        if (isFirst) {
-          const d = cellFor(sec, nameKey)
+        const data = checklistData[i]
+        if (ri < data.length) {
+          const d = data[ri]
           c.value = d.hyperlink ? { text: d.value, hyperlink: d.hyperlink } : d.value
           c.font = {
             size: d.size || 12,
@@ -170,12 +190,14 @@ function buildSheet(wb, { name, title, legend, trailingCols, sections, checklist
             color: { argb: d.color || CLR.text },
           }
           c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+        } else {
+          c.value = ''
+          c.font = { size: 12 }
         }
         c.border = thinBorder
       })
 
       // Trailing cols
-      let longestCommentLen = 0
       trailingCols.forEach((tc, ti) => {
         const colIdx = FIXED.length + checklist.length + 1 + ti
         const cell = row.getCell(colIdx)
@@ -195,9 +217,6 @@ function buildSheet(wb, { name, title, legend, trailingCols, sections, checklist
             vertical:   'middle',
             wrapText:   true,
           }
-          if (isMultiCol && typeof d.value === 'string') {
-            longestCommentLen = Math.max(longestCommentLen, d.value.length)
-          }
         } else {
           cell.value = ''
           cell.font = { size: 12 }
@@ -215,12 +234,20 @@ function buildSheet(wb, { name, title, legend, trailingCols, sections, checklist
         }
       }
 
-      // Row height — grow if there's a long comment in this row
-      const baseH = 28
-      const commentH = longestCommentLen
-        ? Math.min(120, Math.max(baseH, Math.ceil(longestCommentLen / 80) * 18 + 12))
-        : baseH
-      row.height = commentH
+      // Row height — grow based on the maximum number of text lines in any
+      // cell in this row (line breaks from stacked files / stacked comments).
+      let maxLines = 1
+      checklistData.forEach(arr => {
+        if (ri < arr.length && typeof arr[ri].value === 'string') {
+          maxLines = Math.max(maxLines, arr[ri].value.split('\n').length)
+        }
+      })
+      colData.forEach(arr => {
+        if (ri < arr.length && typeof arr[ri].value === 'string') {
+          maxLines = Math.max(maxLines, arr[ri].value.split('\n').length)
+        }
+      })
+      row.height = Math.min(360, Math.max(28, maxLines * 16 + 12))
       rowIdx++
     }
   })
@@ -329,11 +356,14 @@ exports.exportReport = asyncHandler(async (req, res) => {
     width:  44,
     align:  'left',
     headerColor: c.headerColor,
-    valuesFor: (sec) => (commentsByRole[sec.sectionId]?.[c.role] || []).map(cm => ({
-      value: cm.body,
-      color: CLR.text,
-      bold:  false,
-    })),
+    // All comments for this role stacked into ONE cell, separated by a blank
+    // line so each comment is visually distinct. No expansion of rows.
+    valueFor: (sec) => {
+      const list = commentsByRole[sec.sectionId]?.[c.role] || []
+      if (list.length === 0) return { value: '—', color: CLR.muted, bold: false }
+      const stacked = list.map(cm => cm.body).join('\n\n')
+      return { value: stacked, color: CLR.text, bold: false }
+    },
   }))
   const commentHeaderColors = commentCols.map(c => c.headerColor)
 
@@ -398,13 +428,13 @@ exports.exportReport = asyncHandler(async (req, res) => {
     cellFor: (sec, nameKey) => {
       const entry = (sfMap[sec.sectionId] || {})[nameKey]
       if (!entry || entry.files.length === 0) return { value: '–', color: CLR.muted }
-      const latest = entry.files[0]
-      const extra  = entry.files.length > 1 ? `  (+${entry.files.length - 1} more)` : ''
-      return {
-        value:     latest.originalName + extra,
-        hyperlink: downloadProxyUrl(apiBase, latest.fileId),
-        color:     CLR.link,
-      }
+      const stacked = entry.files.map(f => f.originalName).join('\n')
+      // Single file → direct download. Multiple files → tiny landing page
+      // so every file is reachable (Excel allows only one hyperlink per cell).
+      const link = entry.files.length === 1
+        ? downloadProxyUrl(apiBase, entry.files[0].fileId)
+        : subfolderListUrl(apiBase, entry.files[0].subfolderId)
+      return { value: stacked, hyperlink: link, color: CLR.link }
     },
     trailingCols: sheet2Trailing,
     headerColors: sheet1HeaderColors,

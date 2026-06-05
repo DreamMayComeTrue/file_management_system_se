@@ -58,7 +58,7 @@ exports.sendDeadlineReminder = async (toEmail, { subjectCode, subjectName, secti
         <tr><td style="padding:4px 12px;color:#555;">Deadline</td><td style="padding:4px 12px;"><strong>${niceDate}</strong></td></tr>
       </table>
       <p>Please log in to upload any outstanding documents and mark the subfolders complete before the deadline.</p>
-      <p style="color:#777;font-size:0.85rem;margin-top:1.5rem;">— SE Course File Management System</p>
+      <p style="color:#777;font-size:0.85rem;margin-top:1.5rem;">SE Course File Management System</p>
     `,
   })
 }

@@ -104,10 +104,10 @@ export default function CreateSection() {
                   className={`form-input${errors.lecturerId ? ' error' : ''}`}
                   {...register('lecturerId', { required: 'Please assign a lecturer to this section' })}
                 >
-                  <option value="">— Select lecturer —</option>
+                  <option value="">Select a lecturer…</option>
                   {lecturers.map(l => (
                     <option key={l.id} value={l.id}>
-                      {l.fullName} ({l.role}) — {l.email}
+                      {l.fullName} ({l.role}) · {l.email}
                     </option>
                   ))}
                 </select>
