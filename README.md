@@ -117,20 +117,20 @@ Subject → Section → Subfolder → File → FileVersion
 
 ```
 ┌───────────────────────────────────────────────────────────┐
-│  PRESENTATION LAYER  (client/)                             │
-│  React SPA — Pages → Components → Services (Axios)         │
+│  PRESENTATION LAYER  (client/)                            │
+│  React SPA — Pages → Components → Services (Axios)        │
 └───────────────────────────┬───────────────────────────────┘
                             │ HTTP / JSON   (REST /api/...)
 ┌───────────────────────────▼───────────────────────────────┐
-│  APPLICATION LAYER  (server/)                              │
-│  Express → Routes → Middleware → Controllers → Models      │
-│  JWT auth · role authorisation · Multer · cron jobs        │
+│  APPLICATION LAYER  (server/)                             │
+│  Express → Routes → Middleware → Controllers → Models     │
+│  JWT auth · role authorisation · Multer · cron jobs       │
 └───────────────────────────┬───────────────────────────────┘
                             │ SQL              │ file streams
 ┌───────────────────────────▼─────────┐ ┌──────▼───────────┐
-│  DATA LAYER — MySQL 8                │ │ Cloudinary       │
-│  10 relational tables                │ │ (raw file store) │
-└───────────────────────────────────────┘ └──────────────────┘
+│  DATA LAYER — MySQL 8               │ │ Cloudinary       │
+│  10 relational tables               │ │ (raw file store) │
+└─────────────────────────────────────┘ └──────────────────┘
 ```
 
 For a deeper architectural overview, see [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md).
