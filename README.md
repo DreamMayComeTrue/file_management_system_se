@@ -193,6 +193,8 @@ file_management_system_se/
 | Qiu Jiang Yi | A24MJ4006 |
 | Chang Kai Yuan | A24MJ5069 |
 
+**Semester 2 · 2025/2026**
+
 ---
 
 *Master of Software Engineering · Faculty of Computing · Universiti Teknologi Malaysia*
