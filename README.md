@@ -1,10 +1,10 @@
 # SE Course File Management System
 
-> Application Development Project I — Master of Software Engineering, Universiti Teknologi Malaysia.
+> Application Development Project I : Bachelor of Software Engineering, Universiti Teknologi Malaysia.
 
 A centralised, role-based web platform for managing Software Engineering course documentation.
 **Lecturers** upload and version course materials, the **Programme Coordinator (PIC)** configures
-structure and deadlines, and **Auditors** verify completeness — all from one place.
+structure and deadlines, and **Auditors** verify completeness all from one place.
 
 ---
 
@@ -91,7 +91,7 @@ the **backend controller / routes** they call, and the **database tables** they 
 
 ## Database
 
-The schema is in [`database/schema.sql`](database/schema.sql) — **10 tables**:
+The schema is in [`database/schema.sql`](database/schema.sql) **10 tables**:
 
 | # | Table | Purpose |
 |---|-------|---------|
@@ -141,17 +141,17 @@ For a deeper architectural overview, see [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIE
 
 | Capability | PIC | Lecturer | Audit |
 |------------|:---:|:--------:|:-----:|
-| Create / delete subjects & sections | ✓ | – | – |
-| Manage Lecturer & Audit accounts | ✓ | – | – |
-| Set / extend deadlines | ✓ | – | – |
-| Edit subfolder template | ✓ | – | – |
-| Upload files & versions | ✓ | ✓ | – |
-| Mark subfolders complete | ✓ | ✓ | – |
-| Reject completed subfolders | ✓ | – | – |
-| Restore / delete file versions | ✓ | ✓ | – |
+| Create / delete subjects & sections | ✓ | - | - |
+| Manage Lecturer & Audit accounts | ✓ | - | - |
+| Set / extend deadlines | ✓ | - | - |
+| Edit subfolder template | ✓ | - | - |
+| Upload files & versions | ✓ | ✓ | - |
+| Mark subfolders complete | ✓ | ✓ | - |
+| Reject completed subfolders | ✓ | - | - |
+| Restore / delete file versions | ✓ | ✓ | - |
 | Post section notes | ✓ | ✓ | ✓ |
-| View programme-wide dashboard | ✓ | – | ✓ |
-| Export Excel reports & view audit log | ✓ | – | ✓ |
+| View programme-wide dashboard | ✓ | - | ✓ |
+| Export Excel reports & view audit log | ✓ | - | ✓ |
 | Modify any data | ✓ | Limited | No (read-only) |
 
 ---
@@ -195,4 +195,4 @@ file_management_system_se/
 
 ---
 
-*Master of Software Engineering · Faculty of Computing · Universiti Teknologi Malaysia*
+*Bachelor of Software Engineering · Faculty of MJIIT · Universiti Teknologi Malaysia*
